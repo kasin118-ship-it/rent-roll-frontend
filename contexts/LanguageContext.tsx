@@ -182,7 +182,7 @@ const translations: Record<Language, Record<string, string>> = {
         "contracts.wizard.contractNumber": "Contract Number",
         "contracts.wizard.startDate": "Contract Start",
         "contracts.wizard.endDate": "Contract End",
-        "contracts.wizard.deposit": "Deposit (THB)",
+        "contracts.wizard.deposit": "Deposit",
         "contracts.wizard.rentalSpaces": "Rental Spaces",
         "contracts.wizard.eachSpace": "Each space can have tiered pricing",
         "contracts.wizard.addSpace": "Add Space",
@@ -194,7 +194,7 @@ const translations: Record<Language, Record<string, string>> = {
         "contracts.wizard.tierStart": "Start Date",
         "contracts.wizard.tierEnd": "End Date",
         "contracts.wizard.tierRent": "Monthly Rent",
-        "contracts.wizard.tierService": "Monthly Service Fee",
+        "contracts.wizard.tierService": "Service Fee/Month",
         "contracts.wizard.totalSpaces": "Total Spaces",
         "contracts.wizard.totalArea": "Total Area",
         "contracts.wizard.totalMonthly": "Total Monthly (Rent + Service)",
@@ -490,7 +490,7 @@ const translations: Record<Language, Record<string, string>> = {
         "contracts.wizard.contractNumber": "เลขที่สัญญา",
         "contracts.wizard.startDate": "วันเริ่มสัญญา",
         "contracts.wizard.endDate": "วันสิ้นสุดสัญญา",
-        "contracts.wizard.deposit": "เงินมัดจำ (THB)",
+        "contracts.wizard.deposit": "เงินมัดจำ",
         "contracts.wizard.rentalSpaces": "พื้นที่เช่า",
         "contracts.wizard.eachSpace": "แต่ละพื้นที่มีราคาตามขั้นบันไดได้",
         "contracts.wizard.addSpace": "เพิ่มพื้นที่",
@@ -502,7 +502,7 @@ const translations: Record<Language, Record<string, string>> = {
         "contracts.wizard.tierStart": "วันเริ่ม",
         "contracts.wizard.tierEnd": "วันสิ้นสุด",
         "contracts.wizard.tierRent": "ค่าเช่า/เดือน",
-        "contracts.wizard.tierService": "ค่าบริการ",
+        "contracts.wizard.tierService": "ค่าบริการ/เดือน",
         "contracts.wizard.totalSpaces": "จำนวนพื้นที่เช่า",
         "contracts.wizard.totalArea": "พื้นที่รวม",
         "contracts.wizard.totalMonthly": "ยอดรวมต่อเดือน (ค่าเช่า + ค่าบริการ)",
@@ -648,12 +648,18 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem("rentroll_language", lang);
     };
 
-    const t = (key: string) => {
+    const t = React.useCallback((key: string) => {
         return translations[language][key] || key;
-    };
+    }, [language]);
+
+    const value = React.useMemo(() => ({
+        language,
+        setLanguage: handleSetLanguage,
+        t
+    }), [language, t]);
 
     return (
-        <LanguageContext.Provider value={{ language, setLanguage: handleSetLanguage, t }}>
+        <LanguageContext.Provider value={value}>
             {children}
         </LanguageContext.Provider>
     );

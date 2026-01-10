@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Plus, Search, Filter, FileText, Calendar, Users, Wrench, Building2, ArrowUpDown, ArrowUp, ArrowDown, MoreHorizontal, Pencil, Trash2, RefreshCw, Eye } from "lucide-react";
@@ -49,6 +49,7 @@ import {
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface Contract {
     id: string;
@@ -123,69 +124,78 @@ export default function ContractsPage() {
         terminated: "bg-gray-200 text-gray-600",
     };
 
+    // Debounce search term to prevent excessive re-renders during typing
+    const debouncedSearch = useDebounce(search, 300);
+
     // Get unique building names for filter dropdown
-    const uniqueBuildings = [...new Set(contracts.map(c => getBuildingName(c)).filter(b => b !== "-"))];
+    const uniqueBuildings = useMemo(() => {
+        return [...new Set(contracts.map(c => getBuildingName(c)).filter(b => b !== "-"))];
+    }, [contracts]);
 
-    // Filter contracts
-    const filteredContracts = contracts.filter((contract) => {
-        const matchesSearch =
-            contract.contractNo.toLowerCase().includes(search.toLowerCase()) ||
-            contract.customer?.name?.toLowerCase().includes(search.toLowerCase()) ||
-            getBuildingName(contract).toLowerCase().includes(search.toLowerCase());
-        const matchesStatus =
-            statusFilters.length === 0 || statusFilters.includes(contract.status);
-        const matchesBuilding =
-            buildingFilters.length === 0 || buildingFilters.includes(getBuildingName(contract));
-        return matchesSearch && matchesStatus && matchesBuilding;
-    });
+    // Filter contracts - Memoized
+    const filteredContracts = useMemo(() => {
+        return contracts.filter((contract) => {
+            const matchesSearch =
+                contract.contractNo.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+                contract.customer?.name?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+                getBuildingName(contract).toLowerCase().includes(debouncedSearch.toLowerCase());
+            const matchesStatus =
+                statusFilters.length === 0 || statusFilters.includes(contract.status);
+            const matchesBuilding =
+                buildingFilters.length === 0 || buildingFilters.includes(getBuildingName(contract));
+            return matchesSearch && matchesStatus && matchesBuilding;
+        });
+    }, [contracts, debouncedSearch, statusFilters, buildingFilters]);
 
-    // Sort contracts
-    const sortedContracts = [...filteredContracts].sort((a, b) => {
-        let aVal: any, bVal: any;
+    // Sort contracts - Memoized
+    const sortedContracts = useMemo(() => {
+        return [...filteredContracts].sort((a, b) => {
+            let aVal: any, bVal: any;
 
-        switch (sortField) {
-            case "building":
-                aVal = getBuildingName(a);
-                bVal = getBuildingName(b);
-                break;
-            case "contractNo":
-                aVal = a.contractNo;
-                bVal = b.contractNo;
-                break;
-            case "customer":
-                aVal = a.customer?.name || "";
-                bVal = b.customer?.name || "";
-                break;
-            case "startDate":
-                aVal = new Date(a.startDate).getTime();
-                bVal = new Date(b.startDate).getTime();
-                break;
-            case "endDate":
-                aVal = new Date(a.endDate).getTime();
-                bVal = new Date(b.endDate).getTime();
-                break;
-            case "rent":
-                aVal = calculateCurrentRent(a).rent;
-                bVal = calculateCurrentRent(b).rent;
-                break;
-            case "serviceFee":
-                aVal = calculateCurrentRent(a).fee;
-                bVal = calculateCurrentRent(b).fee;
-                break;
-            case "status":
-                aVal = a.status;
-                bVal = b.status;
-                break;
-            default:
-                aVal = a.contractNo;
-                bVal = b.contractNo;
-        }
+            switch (sortField) {
+                case "building":
+                    aVal = getBuildingName(a);
+                    bVal = getBuildingName(b);
+                    break;
+                case "contractNo":
+                    aVal = a.contractNo;
+                    bVal = b.contractNo;
+                    break;
+                case "customer":
+                    aVal = a.customer?.name || "";
+                    bVal = b.customer?.name || "";
+                    break;
+                case "startDate":
+                    aVal = new Date(a.startDate).getTime();
+                    bVal = new Date(b.startDate).getTime();
+                    break;
+                case "endDate":
+                    aVal = new Date(a.endDate).getTime();
+                    bVal = new Date(b.endDate).getTime();
+                    break;
+                case "rent":
+                    aVal = calculateCurrentRent(a).rent;
+                    bVal = calculateCurrentRent(b).rent;
+                    break;
+                case "serviceFee":
+                    aVal = calculateCurrentRent(a).fee;
+                    bVal = calculateCurrentRent(b).fee;
+                    break;
+                case "status":
+                    aVal = a.status;
+                    bVal = b.status;
+                    break;
+                default:
+                    aVal = a.contractNo;
+                    bVal = b.contractNo;
+            }
 
-        if (typeof aVal === "string" && typeof bVal === "string") {
-            return sortDirection === "asc" ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
-        }
-        return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
-    });
+            if (typeof aVal === "string" && typeof bVal === "string") {
+                return sortDirection === "asc" ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+            }
+            return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
+        });
+    }, [filteredContracts, sortField, sortDirection]);
 
     // Toggle sort
     const handleSort = (field: SortField) => {
@@ -203,11 +213,13 @@ export default function ContractsPage() {
         return sortDirection === "asc" ? <ArrowUp className="w-3 h-3 ml-1" /> : <ArrowDown className="w-3 h-3 ml-1" />;
     };
 
-    // Calculate totals
-    const totals = sortedContracts.reduce((acc, c) => {
-        const { rent, fee } = calculateCurrentRent(c);
-        return { rent: acc.rent + rent, fee: acc.fee + fee };
-    }, { rent: 0, fee: 0 });
+    // Calculate totals - Memoized
+    const totals = useMemo(() => {
+        return sortedContracts.reduce((acc, c) => {
+            const { rent, fee } = calculateCurrentRent(c);
+            return { rent: acc.rent + rent, fee: acc.fee + fee };
+        }, { rent: 0, fee: 0 });
+    }, [sortedContracts]);
 
     return (
         <div className="space-y-6">

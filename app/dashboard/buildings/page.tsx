@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Plus, Search, Building2, Layers, MapPin } from "lucide-react";
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { api } from "@/lib/api";
+import { useDebounce } from "@/hooks/use-debounce";
 
 // Empty mock data removal
 interface Building {
@@ -34,7 +35,7 @@ interface Building {
 }
 
 
-import { useEffect } from "react";
+
 
 export default function BuildingsPage() {
     const { t } = useLanguage();
@@ -60,10 +61,14 @@ export default function BuildingsPage() {
         fetchBuildings();
     }, []);
 
-    const filteredBuildings = buildings.filter(b =>
-        b.name.toLowerCase().includes(search.toLowerCase()) ||
-        b.code.toLowerCase().includes(search.toLowerCase())
-    );
+    const debouncedSearch = useDebounce(search, 300);
+
+    const filteredBuildings = useMemo(() => {
+        return buildings.filter(b =>
+            b.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+            b.code.toLowerCase().includes(debouncedSearch.toLowerCase())
+        );
+    }, [buildings, debouncedSearch]);
 
     const handleCreateBuilding = async (e: React.FormEvent) => {
         e.preventDefault();

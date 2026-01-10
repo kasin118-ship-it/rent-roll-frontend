@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Search, Users, Building2, Phone, Mail, MoreHorizontal, Pencil, Trash2, Eye } from "lucide-react";
 import Link from 'next/link';
@@ -53,6 +53,7 @@ import {
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface Customer {
     id: string;
@@ -93,11 +94,15 @@ export default function CustomersPage() {
         fetchCustomers();
     }, []);
 
-    const filteredCustomers = customers.filter(c =>
-        c.name.toLowerCase().includes(search.toLowerCase()) ||
-        c.taxId?.includes(search) || // taxId might be null
-        c.email?.toLowerCase().includes(search.toLowerCase())
-    );
+    const debouncedSearch = useDebounce(search, 300);
+
+    const filteredCustomers = useMemo(() => {
+        return customers.filter(c =>
+            c.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+            c.taxId?.includes(debouncedSearch) || // taxId might be null
+            c.email?.toLowerCase().includes(debouncedSearch.toLowerCase())
+        );
+    }, [customers, debouncedSearch]);
 
     const handleCreateCustomer = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -220,7 +225,7 @@ export default function CustomersPage() {
                         </div>
                         <div>
                             <p className="text-2xl font-bold text-teal-700">
-                                {customers.filter(c => c.type === "corporate").length}
+                                {useMemo(() => customers.filter(c => c.type === "corporate").length, [customers])}
                             </p>
                             <p className="text-sm text-gray-500">Corporate</p>
                         </div>
@@ -233,7 +238,7 @@ export default function CustomersPage() {
                         </div>
                         <div>
                             <p className="text-2xl font-bold text-teal-700">
-                                {customers.filter(c => c.type === "individual").length}
+                                {useMemo(() => customers.filter(c => c.type === "individual").length, [customers])}
                             </p>
                             <p className="text-sm text-gray-500">Individual</p>
                         </div>

@@ -105,7 +105,7 @@ export default function CreateCustomerDialog({ open, onOpenChange }: CreateCusto
 
                         <div className="space-y-2">
                             <Label className="text-gray-700">{t("customers.address")}</Label>
-                            <Textarea placeholder="Full address" className="resize-none" rows={3} />
+                            <Textarea placeholder={t("customers.addressPlaceholder")} className="resize-none" rows={3} />
                         </div>
 
                         <Separator className="my-4" />
@@ -114,7 +114,7 @@ export default function CreateCustomerDialog({ open, onOpenChange }: CreateCusto
                             <h3 className="font-heading font-semibold text-teal-700">{t("customers.contactPerson")}</h3>
                             <div className="space-y-2">
                                 <Label className="text-gray-700">{t("customers.contactName")}</Label>
-                                <Input placeholder="Name of contact person" />
+                                <Input placeholder={t("customers.contactPersonPlaceholder")} />
                             </div>
                             <div className="grid grid-cols-2 gap-5">
                                 <div className="space-y-2">

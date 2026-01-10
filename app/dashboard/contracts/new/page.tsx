@@ -17,14 +17,10 @@ import { Calendar } from "@/components/ui/calendar";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // Steps
-const steps = [
-    { id: 1, name: "Customer", icon: Users },
-    { id: 2, name: "Terms", icon: FileText },
-    { id: 3, name: "Documents", icon: Upload },
-    { id: 4, name: "Review", icon: Eye },
-];
+// Steps moved inside component for localization
 
 // Mock data
 const customers = [
@@ -94,8 +90,17 @@ function DatePicker({
 
 export default function ContractWizardPage() {
     const router = useRouter();
+    const { t } = useLanguage();
     const [currentStep, setCurrentStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Steps
+    const steps = [
+        { id: 1, name: t("contracts.wizard.customer"), icon: Users },
+        { id: 2, name: t("contracts.wizard.terms"), icon: FileText },
+        { id: 3, name: t("contracts.wizard.documents"), icon: Upload },
+        { id: 4, name: t("contracts.wizard.review"), icon: Eye },
+    ];
 
     // Form state
     const [formData, setFormData] = useState({
@@ -340,8 +345,8 @@ export default function ContractWizardPage() {
         <div className="max-w-5xl mx-auto space-y-6">
             {/* Header */}
             <div>
-                <h1 className="text-3xl font-heading font-bold text-teal-700">New Contract</h1>
-                <p className="text-gray-500 mt-1">Create a new rental contract</p>
+                <h1 className="text-3xl font-heading font-bold text-teal-700">{t("contracts.newContract")}</h1>
+                <p className="text-gray-500 mt-1">{t("dashboard.quickActions.newContractDesc")}</p>
             </div>
 
             {/* Steps */}
@@ -385,10 +390,10 @@ export default function ContractWizardPage() {
                     {currentStep === 1 && (
                         <div className="space-y-6">
                             <div>
-                                <CardTitle className="text-xl text-teal-700">Select Customer</CardTitle>
-                                <p className="text-sm text-gray-500 mt-1">Choose the customer for this contract</p>
+                                <CardTitle className="text-xl text-teal-700">{t("contracts.wizard.selectCustomer")}</CardTitle>
+                                <p className="text-sm text-gray-500 mt-1">{t("contracts.wizard.chooseCustomer")}</p>
                             </div>
-                            <Input placeholder="🔍 Search customers..." className="bg-gray-50 border-gray-200 focus:bg-white" />
+                            <Input placeholder={`🔍 ${t("customers.searchPlaceholder")}`} className="bg-gray-50 border-gray-200 focus:bg-white" />
                             <div className="grid gap-3">
                                 {customers.map(customer => (
                                     <div
@@ -430,14 +435,14 @@ export default function ContractWizardPage() {
                     {currentStep === 2 && (
                         <div className="space-y-6">
                             <div>
-                                <CardTitle className="text-xl text-teal-700">Contract Terms</CardTitle>
-                                <p className="text-sm text-gray-500 mt-1">Define rental spaces with tiered pricing</p>
+                                <CardTitle className="text-xl text-teal-700">{t("contracts.wizard.contractTerms")}</CardTitle>
+                                <p className="text-sm text-gray-500 mt-1">{t("contracts.wizard.defineSpaces")}</p>
                             </div>
 
                             {/* Contract Info */}
                             <div className="grid grid-cols-4 gap-4">
                                 <div className="space-y-2">
-                                    <Label>Contract Number</Label>
+                                    <Label>{t("contracts.wizard.contractNumber")}</Label>
                                     <Input
                                         value={formData.contractNo}
                                         onChange={e => setFormData(prev => ({ ...prev, contractNo: e.target.value }))}
@@ -446,23 +451,23 @@ export default function ContractWizardPage() {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Contract Start</Label>
+                                    <Label>{t("contracts.wizard.startDate")}</Label>
                                     <DatePicker
                                         value={formData.contractStartDate}
                                         onChange={date => setFormData(prev => ({ ...prev, contractStartDate: date }))}
-                                        placeholder="Start date"
+                                        placeholder={t("contracts.wizard.startDate")}
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Contract End</Label>
+                                    <Label>{t("contracts.wizard.endDate")}</Label>
                                     <DatePicker
                                         value={formData.contractEndDate}
                                         onChange={date => setFormData(prev => ({ ...prev, contractEndDate: date }))}
-                                        placeholder="End date"
+                                        placeholder={t("contracts.wizard.endDate")}
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Deposit (THB)</Label>
+                                    <Label>{t("contracts.wizard.deposit")}</Label>
                                     <div className="relative">
                                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">฿</span>
                                         <Input
@@ -485,8 +490,8 @@ export default function ContractWizardPage() {
                                             <Layers className="w-4 h-4 text-white" />
                                         </div>
                                         <div>
-                                            <h3 className="font-semibold text-teal-700">Rental Spaces</h3>
-                                            <p className="text-xs text-gray-500">Each space can have tiered pricing</p>
+                                            <h3 className="font-semibold text-teal-700">{t("contracts.wizard.rentalSpaces")}</h3>
+                                            <p className="text-xs text-gray-500">{t("contracts.wizard.eachSpace")}</p>
                                         </div>
                                     </div>
                                     <Button
@@ -496,7 +501,7 @@ export default function ContractWizardPage() {
                                         className="border-teal-300 text-teal-600 hover:bg-teal-50"
                                     >
                                         <Plus className="w-4 h-4 mr-1" />
-                                        Add Space
+                                        {t("contracts.wizard.addSpace")}
                                     </Button>
                                 </div>
 
@@ -534,7 +539,7 @@ export default function ContractWizardPage() {
                                             {/* Property Info Row */}
                                             <div className="grid grid-cols-3 gap-3 mb-4">
                                                 <div className="space-y-1">
-                                                    <Label className="text-xs text-gray-500">Building</Label>
+                                                    <Label className="text-xs text-gray-500">{t("contracts.wizard.building")}</Label>
                                                     <Select
                                                         value={space.buildingId}
                                                         onValueChange={v => updateRentalSpace(space.id, "buildingId", v)}
@@ -550,7 +555,7 @@ export default function ContractWizardPage() {
                                                     </Select>
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <Label className="text-xs text-gray-500">Floor</Label>
+                                                    <Label className="text-xs text-gray-500">{t("contracts.wizard.floor")}</Label>
                                                     <Input
                                                         placeholder="e.g. 1, G, M"
                                                         className="bg-white h-9"
@@ -559,7 +564,7 @@ export default function ContractWizardPage() {
                                                     />
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <Label className="text-xs text-gray-500">Area</Label>
+                                                    <Label className="text-xs text-gray-500">{t("contracts.wizard.area")}</Label>
                                                     <div className="relative">
                                                         <Input
                                                             type="number"
@@ -578,7 +583,7 @@ export default function ContractWizardPage() {
                                                 <div className="flex items-center justify-between mb-3">
                                                     <div className="flex items-center gap-2">
                                                         <DollarSign className="w-4 h-4 text-amber-600" />
-                                                        <span className="text-sm font-medium text-amber-700">Pricing Tiers</span>
+                                                        <span className="text-sm font-medium text-amber-700">{t("contracts.wizard.pricingTiers")}</span>
                                                     </div>
                                                     <Button
                                                         variant="ghost"
@@ -587,17 +592,17 @@ export default function ContractWizardPage() {
                                                         className="h-7 text-xs text-amber-600 hover:bg-amber-100"
                                                     >
                                                         <Plus className="w-3 h-3 mr-1" />
-                                                        Add Tier
+                                                        {t("contracts.wizard.addTier")}
                                                     </Button>
                                                 </div>
 
                                                 <div className="space-y-2">
                                                     {/* Header */}
                                                     <div className="grid grid-cols-5 gap-2 text-xs text-gray-500 px-1">
-                                                        <span>Start Date</span>
-                                                        <span>End Date</span>
-                                                        <span>Monthly Rent</span>
-                                                        <span>Service Fee</span>
+                                                        <span>{t("contracts.wizard.tierStart")}</span>
+                                                        <span>{t("contracts.wizard.tierEnd")}</span>
+                                                        <span>{t("contracts.wizard.tierRent")}</span>
+                                                        <span>{t("contracts.wizard.tierService")}</span>
                                                         <span></span>
                                                     </div>
 
@@ -655,16 +660,16 @@ export default function ContractWizardPage() {
                                 <div className="flex items-center justify-between p-4 bg-gradient-to-r from-teal-50 to-cyan-50 rounded-xl border border-teal-100">
                                     <div className="flex gap-6">
                                         <div>
-                                            <p className="text-xs text-teal-600">Total Spaces</p>
+                                            <p className="text-xs text-teal-600">{t("contracts.wizard.totalSpaces")}</p>
                                             <p className="text-lg font-bold text-teal-700">{formData.rentalSpaces.length}</p>
                                         </div>
                                         <div>
-                                            <p className="text-xs text-teal-600">Total Area</p>
+                                            <p className="text-xs text-teal-600">{t("contracts.wizard.totalArea")}</p>
                                             <p className="text-lg font-bold text-teal-700">{totalArea.toLocaleString()} ตร.ม.</p>
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-xs text-teal-600">Total Monthly (Rent + Service)</p>
+                                        <p className="text-xs text-teal-600">{t("contracts.wizard.totalMonthly")}</p>
                                         <p className="text-2xl font-bold text-gold-600">
                                             ฿{(totalMonthlyRent + totalServiceFee).toLocaleString()}
                                             <span className="text-sm text-gray-500 font-normal ml-2">
@@ -679,11 +684,11 @@ export default function ContractWizardPage() {
 
                             {/* Notes */}
                             <div className="space-y-2">
-                                <Label>Notes (Optional)</Label>
+                                <Label>{t("contracts.wizard.notes")}</Label>
                                 <Textarea
                                     value={formData.notes}
                                     onChange={e => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                                    placeholder="Additional notes about this contract..."
+                                    placeholder={t("contracts.wizard.notesPlaceholder")}
                                     className="bg-gray-50 focus:bg-white min-h-[80px]"
                                 />
                             </div>
@@ -694,8 +699,8 @@ export default function ContractWizardPage() {
                     {currentStep === 3 && (
                         <div className="space-y-6">
                             <div>
-                                <CardTitle className="text-xl text-teal-700">Upload Documents</CardTitle>
-                                <p className="text-sm text-gray-500 mt-1">Attach relevant documents to this contract</p>
+                                <CardTitle className="text-xl text-teal-700">{t("contracts.wizard.uploadDocs")}</CardTitle>
+                                <p className="text-sm text-gray-500 mt-1">{t("contracts.wizard.attachDocs")}</p>
                             </div>
 
                             <div
@@ -712,23 +717,23 @@ export default function ContractWizardPage() {
                                     <Upload className={cn("w-8 h-8", isDragActive ? "text-gold-600" : "text-gold-500")} />
                                 </div>
                                 {isDragActive ? (
-                                    <p className="text-gold-700 font-medium">Drop the files here...</p>
+                                    <p className="text-gold-700 font-medium">{t("contracts.wizard.dropFiles")}</p>
                                 ) : (
                                     <>
-                                        <p className="text-gray-600 font-medium">Drag and drop files here</p>
-                                        <p className="text-sm text-gray-400 mt-2">or click to browse</p>
+                                        <p className="text-gray-600 font-medium">{t("contracts.wizard.dragDrop")}</p>
+                                        <p className="text-sm text-gray-400 mt-2">{t("contracts.wizard.orClick")}</p>
                                     </>
                                 )}
-                                <p className="text-xs text-gray-400 mt-4">Supported: PDF, DOC, DOCX, JPG, PNG (Max 10MB)</p>
+                                <p className="text-xs text-gray-400 mt-4">{t("contracts.wizard.supportedFiles")}</p>
                                 <Button variant="outline" className="mt-6 border-gold-300 text-gold-600 hover:bg-gold-50" onClick={(e) => e.preventDefault()}>
-                                    Browse Files
+                                    {t("contracts.wizard.browse")}
                                 </Button>
                             </div>
 
                             {/* File List */}
                             {formData.documents && formData.documents.length > 0 && (
                                 <div className="space-y-3">
-                                    <Label className="text-gray-600">Attached Files ({formData.documents.length})</Label>
+                                    <Label className="text-gray-600">{t("contracts.wizard.attachedFiles")} ({formData.documents.length})</Label>
                                     <div className="grid gap-3">
                                         {formData.documents.map((file, index) => (
                                             <div key={index} className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-lg shadow-sm">
@@ -761,9 +766,9 @@ export default function ContractWizardPage() {
                                     <Cloud className="w-5 h-5 text-blue-600" />
                                 </div>
                                 <div>
-                                    <h4 className="text-sm font-semibold text-blue-800">Storage Information</h4>
+                                    <h4 className="text-sm font-semibold text-blue-800">{t("contracts.wizard.storageInfo")}</h4>
                                     <p className="text-xs text-blue-600 mt-1">
-                                        Files are securely stored in Google Cloud Storage. Ensure backend GCS credentials are configured.
+                                        {t("contracts.wizard.storageDesc")}
                                     </p>
                                 </div>
                             </div>
@@ -774,35 +779,35 @@ export default function ContractWizardPage() {
                     {currentStep === 4 && (
                         <div className="space-y-6">
                             <div>
-                                <CardTitle className="text-xl text-teal-700">Review Contract</CardTitle>
-                                <p className="text-sm text-gray-500 mt-1">Please review all details before creating</p>
+                                <CardTitle className="text-xl text-teal-700">{t("contracts.wizard.reviewContract")}</CardTitle>
+                                <p className="text-sm text-gray-500 mt-1">{t("contracts.wizard.reviewDesc")}</p>
                             </div>
 
                             {/* Contract Info */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="p-5 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl">
-                                    <p className="text-xs text-teal-600 font-medium uppercase tracking-wide">Customer</p>
+                                    <p className="text-xs text-teal-600 font-medium uppercase tracking-wide">{t("contracts.wizard.customer")}</p>
                                     <p className="text-lg font-semibold text-teal-700 mt-1">{formData.customerName}</p>
                                 </div>
                                 <div className="p-5 bg-gradient-to-br from-gold-50 to-amber-50 rounded-xl">
-                                    <p className="text-xs text-gold-600 font-medium uppercase tracking-wide">Contract No.</p>
+                                    <p className="text-xs text-gold-600 font-medium uppercase tracking-wide">{t("contracts.wizard.contractNumber")}</p>
                                     <p className="text-lg font-semibold text-teal-700 mt-1">{formData.contractNo}</p>
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-3 gap-4">
                                 <div className="p-4 bg-gray-50 rounded-xl">
-                                    <p className="text-xs text-gray-500">Contract Period</p>
+                                    <p className="text-xs text-gray-500">{t("contracts.wizard.contractPeriod")}</p>
                                     <p className="font-medium mt-1">
                                         {formData.contractStartDate ? format(formData.contractStartDate, "dd/MM/yy") : "-"} - {formData.contractEndDate ? format(formData.contractEndDate, "dd/MM/yy") : "-"}
                                     </p>
                                 </div>
                                 <div className="p-4 bg-gray-50 rounded-xl">
-                                    <p className="text-xs text-gray-500">Total Area</p>
+                                    <p className="text-xs text-gray-500">{t("contracts.wizard.totalArea")}</p>
                                     <p className="font-medium mt-1">{totalArea.toLocaleString()} ตร.ม.</p>
                                 </div>
                                 <div className="p-4 bg-gray-50 rounded-xl">
-                                    <p className="text-xs text-gray-500">Deposit</p>
+                                    <p className="text-xs text-gray-500">{t("contracts.wizard.deposit")}</p>
                                     <p className="font-medium mt-1">฿{formData.depositAmount.toLocaleString()}</p>
                                 </div>
                             </div>
@@ -811,7 +816,7 @@ export default function ContractWizardPage() {
                             <div className="space-y-3">
                                 <h4 className="font-medium text-teal-700 flex items-center gap-2">
                                     <Layers className="w-4 h-4" />
-                                    Rental Spaces ({formData.rentalSpaces.length})
+                                    {t("contracts.wizard.rentalSpaces")} ({formData.rentalSpaces.length})
                                 </h4>
                                 {formData.rentalSpaces.map((space, index) => (
                                     <div key={space.id} className="p-4 bg-gray-50 rounded-xl">
@@ -840,15 +845,15 @@ export default function ContractWizardPage() {
                             <div className="p-6 bg-gradient-to-r from-gold-500 to-amber-500 rounded-xl text-white">
                                 <div className="flex justify-between items-center">
                                     <div>
-                                        <p className="text-sm text-white/80">Monthly Rent</p>
+                                        <p className="text-sm text-white/80">{t("contracts.wizard.tierRent")}</p>
                                         <p className="text-2xl font-bold">฿{totalMonthlyRent.toLocaleString()}</p>
                                     </div>
                                     <div className="text-center">
-                                        <p className="text-sm text-white/80">Service Fee</p>
+                                        <p className="text-sm text-white/80">{t("contracts.wizard.tierService")}</p>
                                         <p className="text-2xl font-bold">฿{totalServiceFee.toLocaleString()}</p>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-sm text-white/80">Total Monthly</p>
+                                        <p className="text-sm text-white/80">{t("contracts.wizard.totalMonthly")}</p>
                                         <p className="text-3xl font-bold">฿{(totalMonthlyRent + totalServiceFee).toLocaleString()}</p>
                                     </div>
                                 </div>
@@ -866,7 +871,7 @@ export default function ContractWizardPage() {
                     className="px-6"
                 >
                     <ChevronLeft className="w-4 h-4 mr-2" />
-                    {currentStep === 1 ? "Cancel" : "Back"}
+                    {currentStep === 1 ? t("common.cancel") : t("contracts.wizard.back")}
                 </Button>
 
                 {currentStep < 4 ? (
@@ -875,7 +880,7 @@ export default function ContractWizardPage() {
                         onClick={() => setCurrentStep(prev => prev + 1)}
                         disabled={!canProceed()}
                     >
-                        Next
+                        {t("contracts.wizard.next")}
                         <ChevronRight className="w-4 h-4 ml-2" />
                     </Button>
                 ) : (
@@ -884,7 +889,7 @@ export default function ContractWizardPage() {
                         onClick={handleSubmit}
                         disabled={isSubmitting}
                     >
-                        {isSubmitting ? "Creating..." : "Create Contract"}
+                        {isSubmitting ? "Creating..." : t("contracts.wizard.createContract")}
                     </Button>
                 )}
             </div>

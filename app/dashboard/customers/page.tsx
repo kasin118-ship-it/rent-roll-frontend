@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Search, Users, Building2, Phone, Mail, MoreHorizontal, Pencil, Trash2, Eye } from "lucide-react";
+import { Plus, Search, Users, Building2, Phone, Mail, MoreHorizontal, Pencil, Trash2, Eye, Filter } from "lucide-react";
 import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,25 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+    DropdownMenuSeparator,
+    DropdownMenuCheckboxItem,
+} from "@/components/ui/dropdown-menu";
+
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 import { toast } from "sonner";
 import { api } from "@/lib/api";
@@ -46,6 +65,7 @@ export default function CustomersPage() {
     const queryClient = useQueryClient();
     const router = useRouter();
     const [search, setSearch] = useState("");
+    const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
@@ -64,12 +84,23 @@ export default function CustomersPage() {
     const debouncedSearch = useDebounce(search, 300);
 
     const filteredCustomers = useMemo(() => {
-        return customers.filter((c: Customer) =>
-            c.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-            c.taxId?.includes(debouncedSearch) || // taxId might be null
-            c.email?.toLowerCase().includes(debouncedSearch.toLowerCase())
-        );
-    }, [customers, debouncedSearch]);
+        return customers.filter((c: Customer) => {
+            const matchesSearch = c.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+                c.taxId?.includes(debouncedSearch) || // taxId might be null
+                c.email?.toLowerCase().includes(debouncedSearch.toLowerCase());
+
+            if (!matchesSearch) return false;
+
+            if (statusFilter === "all") return true;
+
+            const hasActiveContract = c.contracts?.some((contract: any) => contract.status === 'active');
+
+            if (statusFilter === "active") return hasActiveContract;
+            if (statusFilter === "inactive") return !hasActiveContract;
+
+            return true;
+        });
+    }, [customers, debouncedSearch, statusFilter]);
 
 
 
@@ -97,7 +128,7 @@ export default function CustomersPage() {
                         </div>
                         <div>
                             <p className="text-2xl font-bold text-teal-700">{customers.length}</p>
-                            <p className="text-sm text-gray-500">Total Customers</p>
+                            <p className="text-sm text-gray-500">{t("dashboard.stats.totalCustomers")}</p>
                         </div>
                     </CardContent>
                 </Card>
@@ -110,7 +141,7 @@ export default function CustomersPage() {
                             <p className="text-2xl font-bold text-teal-700">
                                 {useMemo(() => customers.filter((c: Customer) => c.type === "corporate").length, [customers])}
                             </p>
-                            <p className="text-sm text-gray-500">Corporate</p>
+                            <p className="text-sm text-gray-500">{t("customers.corporate")}</p>
                         </div>
                     </CardContent>
                 </Card>
@@ -123,7 +154,7 @@ export default function CustomersPage() {
                             <p className="text-2xl font-bold text-teal-700">
                                 {useMemo(() => customers.filter((c: Customer) => c.type === "individual").length, [customers])}
                             </p>
-                            <p className="text-sm text-gray-500">Individual</p>
+                            <p className="text-sm text-gray-500">{t("customers.individual")}</p>
                         </div>
                     </CardContent>
                 </Card>
@@ -135,26 +166,49 @@ export default function CustomersPage() {
                     <CardTitle className="text-lg font-heading text-teal-700">
                         {t("customers.title")} ({filteredCustomers.length})
                     </CardTitle>
-                    {/* Search inside the card */}
-                    <div className="relative max-w-md mt-3">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <Input
-                            placeholder={t("customers.searchPlaceholder")}
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="!pl-14"
-                            style={{ paddingLeft: "3.5rem" }}
-                        />
+                    <div className="flex flex-col sm:flex-row gap-4 mt-3">
+                        <div className="relative flex-1 max-w-md">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                            <Input
+                                placeholder={t("customers.searchPlaceholder")}
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                className="!pl-14"
+                                style={{ paddingLeft: "3.5rem" }}
+                            />
+                        </div>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className="gap-2">
+                                    <Filter className="w-4 h-4" />
+                                    {statusFilter === "all" ? t("customers.status.all") :
+                                        statusFilter === "active" ? t("customers.status.active") :
+                                            t("customers.status.inactive")}
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start">
+                                <DropdownMenuItem onClick={() => setStatusFilter("all")}>
+                                    {t("customers.status.all")}
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => setStatusFilter("active")}>
+                                    {t("customers.status.active")}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setStatusFilter("inactive")}>
+                                    {t("customers.status.inactive")}
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                 </CardHeader>
                 <CardContent>
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-[300px]">Customer</TableHead>
-                                <TableHead>Tax ID</TableHead>
-                                <TableHead>Contact</TableHead>
-                                <TableHead>Active Contracts</TableHead>
+                                <TableHead className="w-[300px]">{t("customers.table.customer")}</TableHead>
+                                <TableHead>{t("customers.table.taxId")}</TableHead>
+                                <TableHead>{t("customers.table.contact")}</TableHead>
+                                <TableHead>{t("customers.table.activeContracts")}</TableHead>
                                 <TableHead></TableHead>
                             </TableRow>
                         </TableHeader>

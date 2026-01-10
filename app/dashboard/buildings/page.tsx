@@ -13,7 +13,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { api } from "@/lib/api";
-import { api } from "@/lib/api";
 import { useDebounce } from "@/hooks/use-debounce";
 import dynamic from 'next/dynamic';
 

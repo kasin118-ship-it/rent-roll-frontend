@@ -9,19 +9,18 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { api } from "@/lib/api";
+import { api } from "@/lib/api";
 import { useDebounce } from "@/hooks/use-debounce";
+import dynamic from 'next/dynamic';
+
+// Lazy load dialog
+const CreateBuildingDialog = dynamic(() => import('@/components/dashboard/buildings/create-building-dialog'), {
+    loading: () => null,
+});
 
 // Empty mock data removal
 interface Building {
@@ -57,18 +56,13 @@ export default function BuildingsPage() {
     const debouncedSearch = useDebounce(search, 300);
 
     const filteredBuildings = useMemo(() => {
-        return buildings.filter(b =>
+        return buildings.filter((b: Building) =>
             b.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
             b.code.toLowerCase().includes(debouncedSearch.toLowerCase())
         );
     }, [buildings, debouncedSearch]);
 
-    const handleCreateBuilding = async (e: React.FormEvent) => {
-        e.preventDefault();
-        // API call would go here
-        toast.success("Building created successfully!");
-        setIsDialogOpen(false);
-    };
+
 
     return (
         <div className="space-y-6">
@@ -78,64 +72,11 @@ export default function BuildingsPage() {
                     <h1 className="text-3xl font-heading font-bold text-teal-700">{t("buildings.title")}</h1>
                     <p className="text-gray-500 mt-1">{t("buildings.subtitle")}</p>
                 </div>
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button className="btn-gold">
-                            <Plus className="w-4 h-4 mr-2" />
-                            {t("buildings.addBuilding")}
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-xl p-6">
-                        <DialogHeader className="mb-4">
-                            <DialogTitle className="text-2xl font-heading font-bold text-teal-700">{t("buildings.addBuilding")}</DialogTitle>
-                        </DialogHeader>
-                        <form onSubmit={handleCreateBuilding} className="space-y-5">
-                            <div className="space-y-5">
-                                <div className="grid grid-cols-2 gap-5">
-                                    <div className="space-y-2">
-                                        <Label className="text-gray-700">{t("buildings.buildingName")}</Label>
-                                        <Input placeholder="Kingbridge Tower C" required className="h-10" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label className="text-gray-700">{t("buildings.code")}</Label>
-                                        <Input placeholder="KT-C" required className="h-10 font-mono" />
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-gray-700">{t("buildings.address")}</Label>
-                                    <Textarea placeholder="Full address..." className="resize-none" rows={3} />
-                                </div>
-                                <div className="grid grid-cols-2 gap-5">
-                                    <div className="space-y-2">
-                                        <Label className="text-gray-700">{t("buildings.ownerCompany")}</Label>
-                                        <Input placeholder="Global Lumber Co., Ltd." className="h-10" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label className="text-gray-700">{t("buildings.ownerName")}</Label>
-                                        <Input placeholder="Mr. Kasin" className="h-10" />
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-5">
-                                    <div className="space-y-2">
-                                        <Label className="text-gray-700">{t("buildings.totalFloors")}</Label>
-                                        <Input type="number" placeholder="25" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label className="text-gray-700">{t("buildings.rentableArea")}</Label>
-                                        <Input type="number" placeholder="15000" />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-6">
-                                <Button variant="outline" type="button" onClick={() => setIsDialogOpen(false)} className="px-6">
-                                    {t("common.cancel")}
-                                </Button>
-                                <Button type="submit" className="btn-gold px-6">{t("buildings.createBuilding")}</Button>
-                            </div>
-                        </form>
-                    </DialogContent>
-                </Dialog>
+                <Button className="btn-gold" onClick={() => setIsDialogOpen(true)}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    {t("buildings.addBuilding")}
+                </Button>
+                <CreateBuildingDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
             </div>
 
             {/* Search */}
@@ -187,7 +128,7 @@ export default function BuildingsPage() {
                             </CardContent>
                         </Card>
                     ))
-                ) : filteredBuildings.map((building) => {
+                ) : filteredBuildings.map((building: Building) => {
                     const totalUnits = building.units?.length || 0;
                     const occupiedUnits = building.units?.filter((u: any) => u.status === 'occupied').length || 0;
                     const occupancyRate = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0;

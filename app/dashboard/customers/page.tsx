@@ -4,10 +4,12 @@ import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Search, Users, Building2, Phone, Mail, MoreHorizontal, Pencil, Trash2, Eye } from "lucide-react";
 import Link from 'next/link';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
     Table,
     TableBody,
@@ -68,36 +70,29 @@ interface Customer {
 
 export default function CustomersPage() {
     const { t } = useLanguage();
+    const queryClient = useQueryClient();
     const router = useRouter();
     const [search, setSearch] = useState("");
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [customerType, setCustomerType] = useState("corporate");
-    const [customers, setCustomers] = useState<Customer[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
 
-    useEffect(() => {
-        const fetchCustomers = async () => {
-            try {
-                const res = await api.get('/customers');
-                // Backend wraps response in {success, data, timestamp}
-                const data = res.data.data || res.data;
-                setCustomers(Array.isArray(data) ? data : []);
-            } catch (e: any) {
-                console.error("Fetch Customers Error:", e);
-                toast.error(`Failed to load customers: ${e.response?.data?.message || e.message}`);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchCustomers();
-    }, []);
+    // TanStack Query
+    const { data: customers = [], isLoading } = useQuery({
+        queryKey: ['customers'],
+        queryFn: async () => {
+            const res = await api.get('/customers');
+            return Array.isArray(res.data.data) ? res.data.data : (Array.isArray(res.data) ? res.data : []);
+        }
+    });
+
+
 
     const debouncedSearch = useDebounce(search, 300);
 
     const filteredCustomers = useMemo(() => {
-        return customers.filter(c =>
+        return customers.filter((c: Customer) =>
             c.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
             c.taxId?.includes(debouncedSearch) || // taxId might be null
             c.email?.toLowerCase().includes(debouncedSearch.toLowerCase())
@@ -225,7 +220,7 @@ export default function CustomersPage() {
                         </div>
                         <div>
                             <p className="text-2xl font-bold text-teal-700">
-                                {useMemo(() => customers.filter(c => c.type === "corporate").length, [customers])}
+                                {useMemo(() => customers.filter((c: Customer) => c.type === "corporate").length, [customers])}
                             </p>
                             <p className="text-sm text-gray-500">Corporate</p>
                         </div>
@@ -238,7 +233,7 @@ export default function CustomersPage() {
                         </div>
                         <div>
                             <p className="text-2xl font-bold text-teal-700">
-                                {useMemo(() => customers.filter(c => c.type === "individual").length, [customers])}
+                                {useMemo(() => customers.filter((c: Customer) => c.type === "individual").length, [customers])}
                             </p>
                             <p className="text-sm text-gray-500">Individual</p>
                         </div>
@@ -276,7 +271,17 @@ export default function CustomersPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {filteredCustomers.map((customer) => {
+                            {isLoading ? (
+                                Array.from({ length: 5 }).map((_, i) => (
+                                    <TableRow key={i}>
+                                        <TableCell><Skeleton className="h-10 w-[200px] rounded-full" /></TableCell>
+                                        <TableCell><Skeleton className="h-4 w-[120px]" /></TableCell>
+                                        <TableCell><Skeleton className="h-8 w-[150px]" /></TableCell>
+                                        <TableCell><Skeleton className="h-6 w-[50px] rounded-full" /></TableCell>
+                                        <TableCell><Skeleton className="h-8 w-8 rounded-md" /></TableCell>
+                                    </TableRow>
+                                ))
+                            ) : filteredCustomers.map((customer: Customer) => {
                                 const activeContracts = customer.contracts?.filter((c: any) => c.status === 'active').length || 0;
                                 return (
                                     <TableRow key={customer.id}>
@@ -373,7 +378,7 @@ export default function CustomersPage() {
                                 try {
                                     await api.delete(`/customers/${customerToDelete.id}`);
                                     toast.success(t("customers.deleteSuccess") || "ลบลูกค้าเรียบร้อยแล้ว");
-                                    setCustomers(customers.filter(c => c.id !== customerToDelete.id));
+                                    queryClient.invalidateQueries({ queryKey: ['customers'] });
                                 } catch (e: any) {
                                     toast.error(`${t("customers.deleteFailed") || "ลบลูกค้าไม่สำเร็จ"}: ${e.response?.data?.message || e.message}`);
                                 } finally {

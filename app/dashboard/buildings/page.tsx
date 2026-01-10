@@ -3,10 +3,12 @@
 import { useState, useEffect, useMemo } from "react";
 import { Plus, Search, Building2, Layers, MapPin } from "lucide-react";
 import Link from 'next/link';
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
     Dialog,
     DialogContent,
@@ -41,25 +43,16 @@ export default function BuildingsPage() {
     const { t } = useLanguage();
     const [search, setSearch] = useState("");
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [buildings, setBuildings] = useState<Building[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const queryClient = useQueryClient();
 
-    useEffect(() => {
-        const fetchBuildings = async () => {
-            try {
-                const res = await api.get('/buildings');
-                // Backend wraps response in {success, data, timestamp}
-                const data = res.data.data || res.data;
-                setBuildings(Array.isArray(data) ? data : []);
-            } catch (e: any) {
-                console.error("Fetch Buildings Error:", e);
-                toast.error(`Failed to load buildings: ${e.response?.data?.message || e.message}`);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchBuildings();
-    }, []);
+    // TanStack Query
+    const { data: buildings = [], isLoading } = useQuery({
+        queryKey: ['buildings'],
+        queryFn: async () => {
+            const res = await api.get('/buildings');
+            return Array.isArray(res.data.data) ? res.data.data : (Array.isArray(res.data) ? res.data : []);
+        }
+    });
 
     const debouncedSearch = useDebounce(search, 300);
 
@@ -159,7 +152,42 @@ export default function BuildingsPage() {
 
             {/* Buildings Grid */}
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {filteredBuildings.map((building) => {
+                {isLoading ? (
+                    Array.from({ length: 3 }).map((_, i) => (
+                        <Card key={i} className="border-none shadow-md">
+                            <CardHeader className="pb-2">
+                                <div className="flex items-start justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <Skeleton className="w-12 h-12 rounded-lg" />
+                                        <div>
+                                            <Skeleton className="h-6 w-32 mb-2" />
+                                            <Skeleton className="h-4 w-20" />
+                                        </div>
+                                    </div>
+                                    <Skeleton className="h-6 w-16 rounded-full" />
+                                </div>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="flex items-center gap-2">
+                                    <Skeleton className="w-4 h-4 rounded-full" />
+                                    <Skeleton className="h-4 w-full" />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <Skeleton className="h-4 w-20" />
+                                    <Skeleton className="h-4 w-24" />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between">
+                                        <Skeleton className="h-4 w-16" />
+                                        <Skeleton className="h-4 w-8" />
+                                    </div>
+                                    <Skeleton className="h-2 w-full rounded-full" />
+                                </div>
+                                <Skeleton className="h-10 w-full" />
+                            </CardContent>
+                        </Card>
+                    ))
+                ) : filteredBuildings.map((building) => {
                     const totalUnits = building.units?.length || 0;
                     const occupiedUnits = building.units?.filter((u: any) => u.status === 'occupied').length || 0;
                     const occupancyRate = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0;

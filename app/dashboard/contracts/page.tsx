@@ -4,10 +4,12 @@ import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Plus, Search, Filter, FileText, Calendar, Users, Wrench, Building2, ArrowUpDown, ArrowUp, ArrowDown, MoreHorizontal, Pencil, Trash2, RefreshCw, Eye } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
     Table,
     TableBody,
@@ -67,31 +69,27 @@ type SortDirection = "asc" | "desc";
 export default function ContractsPage() {
     const { t } = useLanguage();
     const router = useRouter();
+    const queryClient = useQueryClient();
     const [search, setSearch] = useState("");
     const [statusFilters, setStatusFilters] = useState<string[]>([]);
     const [buildingFilters, setBuildingFilters] = useState<string[]>([]);
-    const [contracts, setContracts] = useState<Contract[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+
+    // TanStack Query for Contracts
+    const { data: contracts = [], isLoading } = useQuery({
+        queryKey: ['contracts'],
+        queryFn: async () => {
+            const res = await api.get('/contracts');
+            return Array.isArray(res.data.data) ? res.data.data : (Array.isArray(res.data) ? res.data : []);
+        },
+        staleTime: 60 * 1000, // 1 minute stale time
+    });
+
     const [sortField, setSortField] = useState<SortField>("contractNo");
     const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [contractToDelete, setContractToDelete] = useState<Contract | null>(null);
 
-    useEffect(() => {
-        const fetchContracts = async () => {
-            try {
-                const res = await api.get('/contracts');
-                const data = res.data.data || res.data;
-                setContracts(Array.isArray(data) ? data : []);
-            } catch (e: any) {
-                console.error("Fetch Contracts Error:", e);
-                toast.error(`Failed to load contracts: ${e.response?.data?.message || e.message}`);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchContracts();
-    }, []);
+
 
     // Helper to get building name from contract
     const getBuildingName = (contract: Contract): string => {
@@ -129,12 +127,12 @@ export default function ContractsPage() {
 
     // Get unique building names for filter dropdown
     const uniqueBuildings = useMemo(() => {
-        return [...new Set(contracts.map(c => getBuildingName(c)).filter(b => b !== "-"))];
+        return [...new Set(contracts.map((c: Contract) => getBuildingName(c)).filter((b: string) => b !== "-"))];
     }, [contracts]);
 
     // Filter contracts - Memoized
     const filteredContracts = useMemo(() => {
-        return contracts.filter((contract) => {
+        return contracts.filter((contract: Contract) => {
             const matchesSearch =
                 contract.contractNo.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
                 contract.customer?.name?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
@@ -296,21 +294,21 @@ export default function ContractsPage() {
                             </PopoverTrigger>
                             <PopoverContent className="w-56 p-2">
                                 <div className="space-y-2">
-                                    {uniqueBuildings.map(building => (
-                                        <div key={building} className="flex items-center space-x-2">
+                                    {uniqueBuildings.map((building: unknown) => (
+                                        <div key={building as string} className="flex items-center space-x-2">
                                             <Checkbox
                                                 id={`building-${building}`}
-                                                checked={buildingFilters.includes(building)}
+                                                checked={buildingFilters.includes(building as string)}
                                                 onCheckedChange={(checked) => {
                                                     if (checked) {
-                                                        setBuildingFilters([...buildingFilters, building]);
+                                                        setBuildingFilters([...buildingFilters, building as string]);
                                                     } else {
                                                         setBuildingFilters(buildingFilters.filter(b => b !== building));
                                                     }
                                                 }}
                                             />
                                             <label htmlFor={`building-${building}`} className="text-sm cursor-pointer flex-1">
-                                                {building}
+                                                {building as React.ReactNode}
                                             </label>
                                         </div>
                                     ))}
@@ -427,7 +425,21 @@ export default function ContractsPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {sortedContracts.length === 0 ? (
+                            {isLoading ? (
+                                Array.from({ length: 5 }).map((_, i) => (
+                                    <TableRow key={i}>
+                                        <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                                        <TableCell><Skeleton className="h-4 w-[120px]" /></TableCell>
+                                        <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
+                                        <TableCell><Skeleton className="h-4 w-[80px]" /></TableCell>
+                                        <TableCell><Skeleton className="h-4 w-[180px]" /></TableCell>
+                                        <TableCell><Skeleton className="h-4 w-[80px]" /></TableCell>
+                                        <TableCell><Skeleton className="h-4 w-[80px]" /></TableCell>
+                                        <TableCell><Skeleton className="h-4 w-[60px]" /></TableCell>
+                                        <TableCell><Skeleton className="h-8 w-8 rounded-full" /></TableCell>
+                                    </TableRow>
+                                ))
+                            ) : sortedContracts.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={9} className="text-center py-10 text-gray-500">
                                         {t("common.noData") || "No contracts found"}
@@ -552,7 +564,8 @@ export default function ContractsPage() {
                                 try {
                                     await api.delete(`/contracts/${contractToDelete.id}`);
                                     toast.success(t("contracts.deleteSuccess") || "ลบสัญญาเรียบร้อยแล้ว");
-                                    setContracts(contracts.filter(c => c.id !== contractToDelete.id));
+                                    // Invalidate query to refetch
+                                    queryClient.invalidateQueries({ queryKey: ['contracts'] });
                                 } catch (e: any) {
                                     toast.error(`${t("contracts.deleteFailed") || "ลบสัญญาไม่สำเร็จ"}: ${e.response?.data?.message || e.message}`);
                                 } finally {

@@ -1,0 +1,37 @@
+[debug] [2026-01-10T07:22:06.357Z] ----------------------------------------------------------------------
+[debug] [2026-01-10T07:22:06.364Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\Sinz\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js projects:list
+[debug] [2026-01-10T07:22:06.365Z] CLI Version:   15.1.0
+[debug] [2026-01-10T07:22:06.365Z] Platform:      win32
+[debug] [2026-01-10T07:22:06.365Z] Node Version:  v24.11.1
+[debug] [2026-01-10T07:22:06.365Z] Time:          Sat Jan 10 2026 14:22:06 GMT+0700 (เวลาอินโดจีน)
+[debug] [2026-01-10T07:22:06.365Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-01-10T07:22:06.489Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-10T07:22:06.489Z] > authorizing via signed-in user (kasin118@gmail.com)
+[debug] [2026-01-10T07:22:06.492Z] Checked if tokens are valid: false, expires at: 1767966866498
+[debug] [2026-01-10T07:22:06.492Z] Checked if tokens are valid: false, expires at: 1767966866498
+[debug] [2026-01-10T07:22:06.492Z] > refreshing access token with scopes: []
+[debug] [2026-01-10T07:22:06.494Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-01-10T07:22:06.494Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-01-10T07:22:06.687Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-01-10T07:22:06.687Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-01-10T07:22:06.693Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects pageSize=1000
+[debug] [2026-01-10T07:22:07.332Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects 200
+[debug] [2026-01-10T07:22:07.332Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects [omitted]
+[info] ┌──────────────────────┬────────────────────┬────────────────┬──────────────────────┐
+│ Project Display Name │ Project ID         │ Project Number │ Resource Location ID │
+├──────────────────────┼────────────────────┼────────────────┼──────────────────────┤
+│ Gold Biz Demo        │ gold-biz-demo-2025 │ 1014668624794  │ [Not specified]      │
+└──────────────────────┴────────────────────┴────────────────┴──────────────────────┘
+[info] 
+[info] 1 project(s) total.
+[debug] [2026-01-10T07:22:07.350Z] Error: EBUSY: resource busy or locked, unlink 'C:\Users\Sinz\My Drive (kasin@globallumber.co.th)\Work\Rent Roll\frontend\firebase-debug.log'
+    at Object.unlinkSync (node:fs:1942:11)
+    at process.<anonymous> (C:\Users\Sinz\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\cli.js:44:16)
+    at process.emit (node:events:508:28)
+    at process.processEmit [as emit] (C:\Users\Sinz\AppData\Roaming\npm\node_modules\firebase-tools\node_modules\write-file-atomic\node_modules\signal-exit\index.js:191:37)
+    at process.exit (node:internal/process/per_thread:236:15)
+    at C:\Users\Sinz\AppData\Roaming\npm\node_modules\firebase-tools\lib\command.js:127:25
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+[error] 
+[error] Error: An unexpected error has occurred.

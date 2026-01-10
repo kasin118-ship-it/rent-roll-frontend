@@ -1,0 +1,228 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-heading: var(--font-outfit), system-ui, sans-serif;
+
+  /* Kingbridge Brand Colors */
+  --color-gold-50: #FDF8F0;
+  --color-gold-100: #F5EBD9;
+  --color-gold-200: #E8D4B0;
+  --color-gold-300: #D4B87A;
+  --color-gold-400: #C4A052;
+  --color-gold-500: #9B7B4E;
+  --color-gold-600: #7A6240;
+  --color-gold-700: #5C4A30;
+  --color-gold-800: #3D3220;
+  --color-gold-900: #1F1910;
+
+  --color-teal-50: #E8F0F0;
+  --color-teal-100: #C5D8D9;
+  --color-teal-200: #9EBFC0;
+  --color-teal-300: #77A5A7;
+  --color-teal-400: #5A9194;
+  --color-teal-500: #3D7A7E;
+  --color-teal-600: #2A5A5E;
+  --color-teal-700: #1E3A3A;
+  --color-teal-800: #132525;
+  --color-teal-900: #091212;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  /* Component Colors */
+  --color-primary: var(--color-teal-600);
+  --color-primary-foreground: #ffffff;
+  --color-secondary: var(--color-gold-100);
+  --color-secondary-foreground: var(--color-gold-900);
+  --color-muted: #f1f5f9;
+  --color-muted-foreground: #64748b;
+  --color-accent: var(--color-gold-50);
+  --color-accent-foreground: var(--color-gold-900);
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
+  --color-border: #e2e8f0;
+  --color-input: #e2e8f0;
+  --color-ring: var(--color-gold-400);
+}
+
+:root {
+  --radius: 0.625rem;
+  --background: #FFFFFF;
+  --foreground: #1E3A3A;
+}
+
+
+
+/* Global Styles */
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-size: 14px;
+  /* Universal base font size */
+}
+
+/* Custom Utilities */
+.font-heading {
+  font-family: var(--font-heading);
+}
+
+/* Gradient Button */
+.btn-gold {
+  background: linear-gradient(135deg, #C4A052 0%, #9B7B4E 100%);
+  color: white;
+  transition: all 0.2s ease;
+}
+
+.btn-gold:hover {
+  background: linear-gradient(135deg, #D4B87A 0%, #C4A052 100%);
+  box-shadow: 0 4px 12px rgba(155, 123, 78, 0.3);
+}
+
+/* Sidebar Styles */
+.sidebar {
+  background: linear-gradient(180deg, #1E3A3A 0%, #2A5A5E 100%);
+}
+
+.sidebar-item {
+  transition: all 0.2s ease;
+}
+
+.sidebar-item:hover {
+  background: rgba(196, 160, 82, 0.15);
+}
+
+.sidebar-item.active {
+  background: rgba(196, 160, 82, 0.25);
+  border-left: 3px solid #C4A052;
+}
+
+/* ============================================
+   COMPACT MODE - Reduce spacing (keep fonts readable)
+   ============================================ */
+
+/* Reduce main content padding */
+.lg\:pl-64 .p-6 {
+  padding: 0.75rem !important;
+}
+
+/* Compact card headers */
+[data-slot="card-header"] {
+  padding: 0.5rem 0.75rem !important;
+}
+
+/* Compact card content */
+[data-slot="card-content"] {
+  padding: 0.5rem 0.75rem !important;
+}
+
+/* Reduce space-y gaps */
+.space-y-6>*+* {
+  margin-top: 0.75rem !important;
+}
+
+.space-y-4>*+* {
+  margin-top: 0.5rem !important;
+}
+
+/* Compact page titles */
+.text-3xl {
+  font-size: 1.375rem !important;
+  line-height: 1.75rem !important;
+}
+
+/* Compact stat cards */
+.text-2xl {
+  font-size: 1.25rem !important;
+  line-height: 1.5rem !important;
+}
+
+/* Compact table cells - READABLE font size */
+table td,
+table th {
+  padding: 0.4rem 0.6rem !important;
+  font-size: 0.875rem !important;
+}
+
+/* Compact table header */
+table thead th {
+  padding: 0.4rem 0.6rem !important;
+  font-size: 0.8rem !important;
+}
+
+/* Smaller gaps in grids */
+.gap-4 {
+  gap: 0.5rem !important;
+}
+
+.gap-6 {
+  gap: 0.75rem !important;
+}
+
+/* Compact buttons - READABLE */
+button,
+.btn-gold {
+  padding-top: 0.3rem !important;
+  padding-bottom: 0.3rem !important;
+  font-size: 0.875rem !important;
+}
+
+/* Compact badges */
+[data-slot="badge"] {
+  padding: 0.15rem 0.4rem !important;
+  font-size: 0.7rem !important;
+}
+
+/* Sidebar - normal size */
+.sidebar nav {
+  padding: 0.75rem !important;
+}
+
+.sidebar-item {
+  padding: 0.625rem 1rem !important;
+  font-size: 0.9rem !important;
+}
+
+/* Sidebar logo section */
+.sidebar .p-6 {
+  padding: 1rem !important;
+}
+
+/* Compact alerts section */
+.p-4.rounded-lg.border-l-4 {
+  padding: 0.5rem 0.625rem !important;
+}
+
+/* Compact inputs - READABLE */
+input,
+select,
+textarea {
+  padding: 0.4rem 0.6rem !important;
+  font-size: 0.875rem !important;
+}
+
+/* Labels - READABLE */
+label {
+  font-size: 0.8rem !important;
+}
+
+/* Card descriptions - READABLE */
+p.text-gray-500 {
+  font-size: 0.8rem !important;
+}
+
+.text-sm {
+  font-size: 0.8rem !important;
+}
+
+/* Reduce mt-1 margins */
+.mt-1 {
+  margin-top: 0.125rem !important;
+}

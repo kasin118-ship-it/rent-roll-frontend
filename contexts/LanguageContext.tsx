@@ -1,0 +1,552 @@
+"use client";
+
+import React, { createContext, useContext, useState, useEffect } from "react";
+
+type Language = "en" | "th";
+
+type LanguageContextType = {
+    language: Language;
+    setLanguage: (lang: Language) => void;
+    t: (key: string) => string;
+};
+
+const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+
+// Translation Dictionary
+const translations: Record<Language, Record<string, string>> = {
+    en: {
+        // Sidebar
+        "sidebar.dashboard": "Dashboard",
+        "sidebar.buildings": "Buildings",
+        "sidebar.customers": "Customers",
+        "sidebar.contracts": "Contracts",
+        "sidebar.alerts": "Alerts",
+        "sidebar.reports": "Reports",
+        "sidebar.importExport": "Import/Export",
+        "sidebar.settings": "Settings",
+        "sidebar.auditLog": "Audit Log",
+        "sidebar.logout": "Logout",
+        "sidebar.role": "Administrator",
+
+        // Common
+        "common.cancel": "Cancel",
+        "common.create": "Create",
+        "common.search": "Search...",
+        "common.actions": "Actions",
+        "common.edit": "Edit",
+        "common.delete": "Delete",
+        "common.viewDetails": "View Details",
+        "common.customerName": "Customer Name",
+
+        // Settings Page
+        "settings.title": "System Settings",
+        "settings.subtitle": "Configuration and system preferences",
+        "settings.langPref": "Language & Preference",
+        "settings.configDisplay": "Configure display settings",
+        "settings.language": "Language",
+        "settings.selectLang": "Select your preferred language",
+
+        "settings.backupRestore": "Backup & Restore",
+        "settings.manageBackup": "Manage system data backups",
+        "settings.createBackup": "Create Backup",
+        "settings.restoreBackup": "Restore Data",
+        "settings.security": "Security",
+        "settings.accountAccess": "Account and access settings",
+        "settings.twoFactor": "Two-Factor Authentication",
+        "settings.extraSecurity": "Add an extra layer of security",
+        "settings.sessionTimeout": "Session Timeout",
+        "settings.autoLogout": "Auto-logout after inactivity",
+        "settings.dangerZone": "Danger Zone",
+        "settings.irreversible": "Irreversible actions",
+        "settings.warning": "Warning",
+        "settings.factoryResetMsg": "Factory reset will wipe all data and settings. This action cannot be undone.",
+        "settings.factoryReset": "Factory Reset",
+        "settings.resetConfirmTitle": "Confirm Factory Reset",
+        "settings.resetConfirmMsg": "Are you sure you want to perform a factory reset? All data will be permanently deleted.",
+        "settings.typeToConfirm": "Type 'RESET' to confirm",
+        "settings.cancel": "Cancel",
+        "settings.resetting": "Resetting...",
+        "settings.confirmReset": "Confirm Reset",
+        "settings.importExportTitle": "Import / Export Data",
+        "settings.importExportDesc": "Bulk data management",
+        "settings.downloadTemplates": "Download Templates",
+        "settings.exportSystemData": "Export System Data",
+        "settings.exportDataDesc": "Download current system data as CSV/Excel",
+        "settings.importData": "Import Data",
+        "settings.dragDrop": "Drag and drop Excel file here",
+        "settings.browseFiles": "Browse Files",
+
+        // Customers Page
+        "customers.title": "Customers",
+        "customers.subtitle": "Manage your customer database",
+        "customers.addCustomer": "Add Customer",
+        "customers.searchPlaceholder": "Search customers...",
+        "customers.customerType": "Customer Type",
+        "customers.corporate": "Corporate",
+        "customers.individual": "Individual",
+        "customers.taxId": "Tax ID",
+        "customers.citizenId": "Citizen ID",
+        "customers.name": "Name",
+        "customers.phone": "Phone",
+        "customers.email": "Email",
+        "customers.address": "Address",
+        "customers.contactPerson": "Contact Person",
+        "customers.contactName": "Name",
+        "customers.contactPhone": "Contact Phone",
+        "customers.contactEmail": "Contact Email",
+        "customers.createCustomer": "Create Customer",
+        "customers.typePlaceholder": "Select type",
+        "customers.namePlaceholder": "Company or individual name",
+
+        // Buildings Page
+        "buildings.title": "Buildings",
+        "buildings.subtitle": "Manage your properties",
+        "buildings.addBuilding": "Add Building",
+        "buildings.searchPlaceholder": "Search buildings...",
+        "buildings.buildingName": "Building Name",
+        "buildings.code": "Code",
+        "buildings.address": "Address",
+        "buildings.totalFloors": "Total Floors",
+        "buildings.floors": "floors",
+        "buildings.rentableArea": "Rentable Area (sqm)",
+        "buildings.ownerCompany": "Owner Company",
+        "buildings.ownerName": "Owner Name",
+        "buildings.createBuilding": "Create Building",
+        "buildings.occupancy": "Occupancy",
+        "buildings.occupied": "occupied",
+        "buildings.vacant": "vacant",
+
+        // Dashboard Page
+        "dashboard.title": "Dashboard",
+        "dashboard.subtitle": "Welcome back! Here's what's happening.",
+        "dashboard.stats.totalBuildings": "Total Buildings",
+        "dashboard.stats.occupancyRate": "Occupancy Rate",
+        "dashboard.stats.activeContracts": "Active Contracts",
+        "dashboard.stats.totalCustomers": "Total Customers",
+        "dashboard.alerts.recent": "Recent Alerts",
+        "dashboard.quickActions.newContract": "New Contract",
+        "dashboard.quickActions.newContractDesc": "Create a new rental contract",
+        "dashboard.quickActions.addCustomer": "Add Customer",
+        "dashboard.quickActions.addCustomerDesc": "Register a new customer",
+        "dashboard.quickActions.manageUnits": "Manage Units",
+        "dashboard.quickActions.manageUnitsDesc": "View and manage units",
+        "dashboard.resetData": "Reset All Data",
+        "dashboard.resetConfirm": "Are you sure you want to delete ALL data? This cannot be undone.",
+        "dashboard.resetSuccess": "System reset successfully",
+
+        // Dashboard Revenue
+        "dashboard.revenue.title": "Monthly Revenue Breakdown",
+        "dashboard.revenue.rent": "Monthly Rent",
+        "dashboard.revenue.serviceFee": "Service Fee",
+        "dashboard.revenue.total": "Total Monthly",
+        "dashboard.revenue.occupiedArea": "Occupied Area",
+
+        // Contracts Page
+        "contracts.title": "Contracts",
+        "contracts.subtitle": "Manage rental contracts",
+        "contracts.newContract": "New Contract",
+        "contracts.searchPlaceholder": "Search contracts...",
+        "contracts.filterStatus": "Filter by status",
+        "contracts.status.all": "All Status",
+        "contracts.status.draft": "Draft",
+        "contracts.status.active": "Active",
+        "contracts.status.expiring": "Expiring Soon",
+        "contracts.status.expired": "Expired",
+        "contracts.table.contractNo": "Contract No.",
+        "contracts.table.customer": "Customer",
+        "contracts.table.units": "Units",
+        "contracts.table.period": "Period",
+        "contracts.table.monthlyRent": "Monthly Rent",
+        "contracts.table.status": "Status",
+
+        // Alerts Page
+        "alerts.title": "Alerts",
+        "alerts.unread": "unread notifications",
+        "alerts.caughtUp": "All caught up!",
+        "alerts.markAllRead": "Mark All as Read",
+        "alerts.stats.30days": "30-Day Expiry",
+        "alerts.stats.60days": "60-Day Expiry",
+        "alerts.stats.90days": "90-Day Expiry",
+        "alerts.stats.total": "Total Alerts",
+        "alerts.allNotifications": "All Notifications",
+        "alerts.markRead": "Mark as Read",
+        "alerts.noAlerts": "No alerts",
+        "alerts.read": "Read",
+        "alerts.today": "Today",
+        "alerts.yesterday": "Yesterday",
+        "alerts.daysAgo": "days ago",
+
+        // Reports Page
+        "reports.title": "Reports",
+        "reports.subtitle": "Analytics and insights",
+        "reports.exportExcel": "Export to Excel",
+        "reports.startDate": "Start Date",
+        "reports.endDate": "End Date",
+        "reports.applyFilter": "Apply Filter",
+        "reports.tabs.revenue": "Revenue",
+        "reports.tabs.occupancy": "Occupancy",
+        "reports.tabs.expiring": "Expiring Contracts",
+        "reports.revenue.total": "Total Revenue",
+        "reports.revenue.totalRent": "Monthly Rent",
+        "reports.revenue.serviceFee": "Service Fee",
+        "reports.revenue.activeContracts": "Active Contracts",
+        "reports.revenue.avgRent": "Average Rent",
+        "reports.revenue.growth": "Growth",
+        "reports.revenue.trendTitle": "Monthly Revenue Trend",
+        "reports.revenue.byBuildingTitle": "Revenue by Building",
+        "reports.revenue.topCustomers": "Top Customers",
+        "reports.occupancy.rate": "Occupancy Rate",
+        "reports.occupancy.occupied": "Occupied",
+        "reports.occupancy.vacant": "Vacant",
+        "reports.occupancy.maintenance": "Maintenance",
+        "reports.occupancy.byBuilding": "Rent Rate by Building",
+        "reports.occupancy.units": "Units",
+        "reports.occupancy.occupancyRate": "Occupancy",
+        "reports.occupancy.rentPerSqm": "Rent/Sqm",
+        "reports.occupancy.servicePerSqm": "Service/Sqm",
+        "reports.occupancy.monthlyRent": "Monthly Rent",
+        "reports.occupancy.monthlyService": "Monthly Service",
+        "reports.expiring.next90Days": "Contracts Expiring in Next 90 Days",
+        "reports.table.daysLeft": "Days Left",
+
+        // Contracts - new fields
+        "contracts.table.serviceFee": "Service Fee",
+        "contracts.summary.rent": "Monthly Rent",
+        "contracts.summary.serviceFee": "Service Fee",
+        "contracts.summary.total": "Total Monthly",
+        "common.building": "Building",
+
+        // Import/Export
+        "importExport.title": "Import / Export",
+        "importExport.subtitle": "Bulk data management with Excel templates",
+        "importExport.tabs.export": "Export Data",
+        "importExport.tabs.import": "Import Data",
+        "importExport.export.table.template": "Template",
+        "importExport.export.table.columns": "Required Columns",
+        "importExport.export.table.lastImport": "Last Import",
+        "importExport.export.btn.template": "Template",
+        "importExport.export.btn.export": "Export",
+        "importExport.import.title": "Upload File",
+        "importExport.import.desc": "Upload Excel file (.xlsx) to import data",
+        "importExport.import.dragDrop": "Drag and drop your file here, or click to select",
+        "importExport.import.browse": "Browse",
+        "importExport.import.selectFile": "Select File",
+        "importExport.import.progress": "Importing...",
+        "importExport.import.success": "Imported",
+        "importExport.import.failed": "Failed",
+        "importExport.import.errors": "Errors",
+
+        // Audit Log
+        "audit.title": "Audit Log",
+        "audit.subtitle": "System activity history",
+        "audit.searchPlaceholder": "Search logs...",
+        "audit.filter.action": "Action",
+        "audit.filter.all": "All Actions",
+        "audit.filter.create": "Create",
+        "audit.filter.update": "Update",
+        "audit.filter.patch": "Patch",
+        "audit.filter.delete": "Delete",
+        "audit.table.timestamp": "Timestamp",
+        "audit.table.user": "User",
+        "audit.table.action": "Action",
+        "audit.table.endpoint": "Endpoint",
+        "audit.table.status": "Status",
+        "audit.table.duration": "Duration",
+        "audit.detail.title": "Audit Log Detail",
+        "audit.detail.timestamp": "Timestamp",
+        "audit.detail.user": "User",
+        "audit.detail.action": "Action",
+        "audit.detail.status": "Status",
+        "audit.detail.endpoint": "Endpoint",
+        "audit.detail.requestBody": "Request Body",
+        "audit.detail.responseData": "Response Data",
+        "audit.detail.error": "Error",
+    },
+    th: {
+        // Sidebar
+        "sidebar.dashboard": "ภาพรวม",
+        "sidebar.buildings": "อาคาร",
+        "sidebar.customers": "ลูกค้า",
+        "sidebar.contracts": "สัญญาเช่า",
+        "sidebar.alerts": "การแจ้งเตือน",
+        "sidebar.reports": "รายงาน",
+        "sidebar.importExport": "นำเข้า/ส่งออก",
+        "sidebar.settings": "ตั้งค่าระบบ",
+        "sidebar.auditLog": "ประวัติการใช้งาน",
+        "sidebar.logout": "ออกจากระบบ",
+        "sidebar.role": "ผู้ดูแลระบบ",
+
+        // Common
+        "common.cancel": "ยกเลิก",
+        "common.create": "สร้าง",
+        "common.search": "ค้นหา...",
+        "common.actions": "จัดการ",
+        "common.edit": "แก้ไข",
+        "common.delete": "ลบ",
+        "common.viewDetails": "ดูรายละเอียด",
+        "common.customerName": "ชื่อลูกค้า",
+
+        // Settings Page
+        "settings.title": "ตั้งค่าระบบ",
+        "settings.subtitle": "การกำหนดค่าและการตั้งค่าระบบ",
+        "settings.langPref": "ภาษาและการแสดงผล",
+        "settings.configDisplay": "ตั้งค่าการแสดงผล",
+        "settings.language": "ภาษา",
+        "settings.selectLang": "เลือกภาษาที่ต้องการแสดง",
+        "settings.darkMode": "โหมดมืด",
+        "settings.toggleDark": "เปิด/ปิด ธีมมืด",
+        "settings.backupRestore": "สำรองและกู้คืนข้อมูล",
+        "settings.manageBackup": "จัดการการสำรองข้อมูล",
+        "settings.createBackup": "สร้างไฟล์สำรอง",
+        "settings.restoreBackup": "กู้คืนข้อมูล",
+        "settings.security": "ความปลอดภัย",
+        "settings.accountAccess": "ตั้งค่าบัญชีและการเข้าถึง",
+        "settings.twoFactor": "ยืนยันตัวตน 2 ขั้นตอน",
+        "settings.extraSecurity": "เพิ่มความปลอดภัยอีกระดับ",
+        "settings.sessionTimeout": "เวลาหมดอายุเซสชัน",
+        "settings.autoLogout": "ออกจากระบบอัตโนมัติเมื่อไม่มีการใช้งาน",
+        "settings.dangerZone": "พื้นที่อันตราย",
+        "settings.irreversible": "การกระทำที่ไม่สามารถย้อนกลับได้",
+        "settings.warning": "คำเตือน",
+        "settings.factoryResetMsg": "การรีเซ็ตค่าโรงงานจะลบข้อมูลและการตั้งค่าทั้งหมด การกระทำนี้ไม่สามารถย้อนกลับได้",
+        "settings.factoryReset": "รีเซ็ตค่าโรงงาน",
+        "settings.resetConfirmTitle": "ยืนยันการรีเซ็ตค่าโรงงาน",
+        "settings.resetConfirmMsg": "คุณแน่ใจหรือไม่ที่จะทำการรีเซ็ตค่าโรงงาน? ข้อมูลทั้งหมดจะถูกลบถาวร",
+        "settings.typeToConfirm": "พิมพ์ 'RESET' เพื่อยืนยัน",
+        "settings.cancel": "ยกเลิก",
+        "settings.resetting": "กำลังรีเซ็ต...",
+        "settings.confirmReset": "ยืนยันการรีเซ็ต",
+        "settings.importExportTitle": "นำเข้า / ส่งออกข้อมูล",
+        "settings.importExportDesc": "จัดการข้อมูลจำนวนมาก",
+        "settings.downloadTemplates": "ดาวน์โหลดแม่แบบ",
+        "settings.exportSystemData": "ส่งออกข้อมูลระบบ",
+        "settings.exportDataDesc": "ดาวน์โหลดข้อมูลปัจจุบันเป็นไฟล์ CSV/Excel",
+        "settings.importData": "นำเข้าข้อมูล",
+        "settings.dragDrop": "ลากไฟล์มาวางที่นี่",
+        "settings.browseFiles": "เลือกไฟล์",
+
+
+        // Customers Page
+        "customers.title": "ลูกค้า",
+        "customers.subtitle": "จัดการฐานข้อมูลลูกค้า",
+        "customers.addCustomer": "เพิ่มลูกค้าใหม่",
+        "customers.searchPlaceholder": "ค้นหาลูกค้า...",
+        "customers.customerType": "ประเภทลูกค้า",
+        "customers.corporate": "นิติบุคคล",
+        "customers.individual": "บุคคลธรรมดา",
+        "customers.taxId": "เลขประจำตัวผู้เสียภาษี",
+        "customers.citizenId": "เลขบัตรประชาชน",
+        "customers.name": "ชื่อ",
+        "customers.phone": "เบอร์โทรศัพท์",
+        "customers.email": "อีเมล",
+        "customers.address": "ที่อยู่",
+        "customers.contactPerson": "ข้อมูลผู้ติดต่อ",
+        "customers.contactName": "ชื่อผู้ติดต่อ",
+        "customers.contactPhone": "เบอร์โทรผู้ติดต่อ",
+        "customers.contactEmail": "อีเมลผู้ติดต่อ",
+        "customers.createCustomer": "สร้างข้อมูลลูกค้า",
+        "customers.typePlaceholder": "เลือกประเภท",
+        "customers.namePlaceholder": "ระบุชื่อบริษัทหรือชื่อบุคคล",
+
+        // Buildings Page
+        "buildings.title": "อาคาร",
+        "buildings.subtitle": "จัดการข้อมูลอาคารและสถานที่",
+        "buildings.addBuilding": "เพิ่มอาคารใหม่",
+        "buildings.searchPlaceholder": "ค้นหาอาคาร...",
+        "buildings.buildingName": "ชื่ออาคาร",
+        "buildings.code": "รหัสอาคาร",
+        "buildings.address": "ที่อยู่",
+        "buildings.totalFloors": "จำนวนชั้นทั้งหมด",
+        "buildings.floors": "ชั้น",
+        "buildings.rentableArea": "พื้นที่เช่า (ตร.ม.)",
+        "buildings.ownerCompany": "บริษัทเจ้าของ",
+        "buildings.ownerName": "ชื่อเจ้าของ",
+        "buildings.createBuilding": "สร้างข้อมูลอาคาร",
+        "buildings.occupancy": "อัตราการเช่า",
+        "buildings.occupied": "มีผู้เช่า",
+        "buildings.vacant": "ว่าง",
+
+        // Dashboard Page
+        "dashboard.title": "ภาพรวม",
+        "dashboard.subtitle": "ยินดีต้อนรับกลับ! นี่คือสถานะปัจจุบันของระบบ",
+        "dashboard.stats.totalBuildings": "จำนวนอาคารทั้งหมด",
+        "dashboard.stats.occupancyRate": "อัตราการเช่ารวม",
+        "dashboard.stats.activeContracts": "สัญญาที่ยังไม่หมดอายุ",
+        "dashboard.stats.totalCustomers": "ลูกค้าทั้งหมด",
+        "dashboard.alerts.recent": "การแจ้งเตือนล่าสุด",
+        "dashboard.quickActions.newContract": "สร้างสัญญาใหม่",
+        "dashboard.quickActions.newContractDesc": "เพิ่มข้อมูลสัญญาเช่า",
+        "dashboard.quickActions.addCustomer": "เพิ่มลูกค้า",
+        "dashboard.quickActions.addCustomerDesc": "ลงทะเบียนลูกค้าใหม่",
+        "dashboard.quickActions.manageUnits": "จัดการอาคาร",
+        "dashboard.quickActions.manageUnitsDesc": "ดูและจัดการข้อมูลอาคาร",
+        "dashboard.resetData": "รีเซ็ตข้อมูลทั้งหมด",
+        "dashboard.resetConfirm": "คุณแน่ใจหรือไม่ที่จะลบข้อมูลทั้งหมด? การกระทำนี้ไม่สามารถย้อนกลับได้",
+        "dashboard.resetSuccess": "รีเซ็ตระบบเรียบร้อยแล้ว",
+
+        // Dashboard Revenue
+        "dashboard.revenue.title": "สรุปรายรับ/เดือน",
+        "dashboard.revenue.rent": "ค่าเช่า/เดือน",
+        "dashboard.revenue.serviceFee": "ค่าบริการ/เดือน",
+        "dashboard.revenue.total": "รวม/เดือน",
+        "dashboard.revenue.occupiedArea": "พื้นที่เช่าแล้ว",
+
+        // Contracts Page
+        "contracts.title": "สัญญาเช่า",
+        "contracts.subtitle": "จัดการข้อมูลสัญญาเช่าทั้งหมด",
+        "contracts.newContract": "สร้างสัญญาใหม่",
+        "contracts.searchPlaceholder": "ค้นหาสัญญา...",
+        "contracts.filterStatus": "กรองตามสถานะ",
+        "contracts.status.all": "สถานะทั้งหมด",
+        "contracts.status.draft": "ร่าง",
+        "contracts.status.active": "ใช้งานอยู่",
+        "contracts.status.expiring": "ใกล้หมดอายุ",
+        "contracts.status.expired": "หมดอายุ",
+        "contracts.table.contractNo": "เลขที่สัญญา",
+        "contracts.table.customer": "ลูกค้า",
+        "contracts.table.units": "ยูนิต",
+        "contracts.table.period": "ระยะเวลาเช่า",
+        "contracts.table.monthlyRent": "ค่าเช่า/เดือน",
+        "contracts.table.status": "สถานะ",
+
+        // Alerts Page
+        "alerts.title": "การแจ้งเตือน",
+        "alerts.unread": "รายการที่ยังไม่ได้อ่าน",
+        "alerts.caughtUp": "อ่านครบแล้ว!",
+        "alerts.markAllRead": "ทำเครื่องหมายว่าอ่านแล้วทั้งหมด",
+        "alerts.stats.30days": "หมดอายุใน 30 วัน",
+        "alerts.stats.60days": "หมดอายุใน 60 วัน",
+        "alerts.stats.90days": "หมดอายุใน 90 วัน",
+        "alerts.stats.total": "การแจ้งเตือนทั้งหมด",
+        "alerts.allNotifications": "รายการแจ้งเตือนทั้งหมด",
+        "alerts.read": "อ่านแล้ว",
+        "alerts.today": "วันนี้",
+        "alerts.yesterday": "เมื่อวาน",
+        "alerts.daysAgo": "วันก่อน",
+        "alerts.markRead": "ทำเครื่องหมายว่าอ่านแล้ว",
+        "alerts.noAlerts": "ไม่มีการแจ้งเตือน",
+
+        // Reports Page
+        "reports.title": "รายงาน",
+        "reports.subtitle": "ข้อมูลวิเคราะห์และสถิติ",
+        "reports.exportExcel": "ส่งออกเป็น Excel",
+        "reports.startDate": "วันที่เริ่มต้น",
+        "reports.endDate": "วันที่สิ้นสุด",
+        "reports.applyFilter": "แสดงผล",
+        "reports.tabs.revenue": "รายรับ",
+        "reports.tabs.occupancy": "อัตราการเช่า",
+        "reports.tabs.expiring": "สัญญาใกล้หมดอายุ",
+        "reports.revenue.total": "รายรับรวม",
+        "reports.revenue.totalRent": "ค่าเช่า/เดือน",
+        "reports.revenue.serviceFee": "ค่าบริการ/เดือน",
+        "reports.revenue.activeContracts": "สัญญาที่ใช้งานอยู่",
+        "reports.revenue.avgRent": "ค่าเช่าเฉลี่ย",
+        "reports.revenue.growth": "การเติบโต",
+        "reports.revenue.trendTitle": "แนวโน้มรายรับ/เดือน",
+        "reports.revenue.byBuildingTitle": "รายรับแยกตามอาคาร",
+        "reports.revenue.topCustomers": "ลูกค้าที่มีมูลค่าสูงสุด",
+        "reports.occupancy.rate": "อัตราการเช่า",
+        "reports.occupancy.occupied": "มีผู้เช่า",
+        "reports.occupancy.vacant": "ว่าง",
+        "reports.occupancy.maintenance": "ซ่อมบำรุง",
+        "reports.occupancy.byBuilding": "อัตราเช่าแยกรายอาคาร",
+        "reports.occupancy.units": "จำนวนยูนิต",
+        "reports.occupancy.occupancyRate": "อัตราเช่า",
+        "reports.occupancy.rentPerSqm": "ค่าเช่า/ตร.ม.",
+        "reports.occupancy.servicePerSqm": "ค่าบริการ/ตร.ม.",
+        "reports.occupancy.monthlyRent": "ค่าเช่า/เดือน",
+        "reports.occupancy.monthlyService": "ค่าบริการ/เดือน",
+        "reports.expiring.next90Days": "สัญญาที่จะหมดอายุใน 90 วันข้างหน้า",
+        "reports.table.daysLeft": "วันคงเหลือ",
+
+        // Contracts - new fields
+        "contracts.table.serviceFee": "ค่าบริการ/เดือน",
+        "contracts.summary.rent": "ค่าเช่า/เดือน",
+        "contracts.summary.serviceFee": "ค่าบริการ/เดือน",
+        "contracts.summary.total": "รวมทั้งหมด/เดือน",
+        "common.building": "อาคาร",
+
+        // Import/Export
+        "importExport.title": "นำเข้า / ส่งออกข้อมูล",
+        "importExport.subtitle": "จัดการข้อมูลจำนวนมากด้วยไฟล์ Excel",
+        "importExport.tabs.export": "ส่งออกข้อมูล",
+        "importExport.tabs.import": "นำเข้าข้อมูล",
+        "importExport.export.table.template": "แม่แบบข้อมูล",
+        "importExport.export.table.columns": "คอลัมน์ที่จำเป็น",
+        "importExport.export.table.lastImport": "นำเข้าล่าสุด",
+        "importExport.export.btn.template": "ดาวน์โหลดแม่แบบ",
+        "importExport.export.btn.export": "ส่งออกข้อมูล",
+        "importExport.import.title": "อัปโหลดไฟล์",
+        "importExport.import.desc": "อัปโหลดไฟล์ Excel (.xlsx) เพื่อนำเข้าข้อมูล",
+        "importExport.import.dragDrop": "ลากไฟล์มาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์",
+        "importExport.import.browse": "เลือกไฟล์",
+        "importExport.import.selectFile": "เลือกไฟล์",
+        "importExport.import.progress": "กำลังนำเข้า...",
+        "importExport.import.success": "นำเข้าสำเร็จ",
+        "importExport.import.failed": "ล้มเหลว",
+        "importExport.import.errors": "ข้อผิดพลาด",
+
+        // Audit Log
+        "audit.title": "บันทึกการใช้งานระบบ",
+        "audit.subtitle": "ประวัติการใช้งานและกิจกรรมในระบบ",
+        "audit.searchPlaceholder": "ค้นหาบันทึก...",
+        "audit.filter.action": "การกระทำ",
+        "audit.filter.all": "ทั้งหมด",
+        "audit.filter.create": "สร้าง",
+        "audit.filter.update": "แก้ไข",
+        "audit.filter.patch": "แก้ไขบางส่วน",
+        "audit.filter.delete": "ลบ",
+        "audit.table.timestamp": "เวลา",
+        "audit.table.user": "ผู้ใช้งาน",
+        "audit.table.action": "การกระทำ",
+        "audit.table.endpoint": "Endpoint",
+        "audit.table.status": "สถานะ",
+        "audit.table.duration": "ระยะเวลา",
+        "audit.detail.title": "รายละเอียดบันทึก",
+        "audit.detail.timestamp": "เวลา",
+        "audit.detail.user": "ผู้ใช้งาน",
+        "audit.detail.action": "การกระทำ",
+        "audit.detail.status": "สถานะ",
+        "audit.detail.endpoint": "Endpoint",
+        "audit.detail.requestBody": "ข้อมูลที่ส่งไป",
+        "audit.detail.responseData": "ข้อมูลที่ได้รับตอบกลับ",
+        "audit.detail.error": "ข้อผิดพลาด",
+    }
+};
+
+export function LanguageProvider({ children }: { children: React.ReactNode }) {
+    const [language, setLanguage] = useState<Language>("th");
+
+    // Initialize from localStorage
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const savedLanguage = localStorage.getItem("language") as Language;
+            if (savedLanguage) {
+                setLanguage(savedLanguage);
+            }
+        }
+    }, []);
+
+    const handleSetLanguage = (lang: Language) => {
+        setLanguage(lang);
+        localStorage.setItem("rentroll_language", lang);
+    };
+
+    const t = (key: string) => {
+        return translations[language][key] || key;
+    };
+
+    return (
+        <LanguageContext.Provider value={{ language, setLanguage: handleSetLanguage, t }}>
+            {children}
+        </LanguageContext.Provider>
+    );
+}
+
+export function useLanguage() {
+    const context = useContext(LanguageContext);
+    if (context === undefined) {
+        throw new Error("useLanguage must be used within a LanguageProvider");
+    }
+    return context;
+}

@@ -1,0 +1,225 @@
+"use client";
+
+import { useState } from "react";
+import { Plus, Search, Building2, Layers, MapPin } from "lucide-react";
+import Link from 'next/link';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { api } from "@/lib/api";
+
+// Empty mock data removal
+interface Building {
+    id: string;
+    name: string;
+    code: string;
+    address: string;
+    totalFloors: number;
+    rentableArea: number;
+    // Computed on frontend or from API if available
+    units?: any[];
+    status: string;
+}
+
+
+import { useEffect } from "react";
+
+export default function BuildingsPage() {
+    const { t } = useLanguage();
+    const [search, setSearch] = useState("");
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [buildings, setBuildings] = useState<Building[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchBuildings = async () => {
+            try {
+                const res = await api.get('/buildings');
+                // Backend wraps response in {success, data, timestamp}
+                const data = res.data.data || res.data;
+                setBuildings(Array.isArray(data) ? data : []);
+            } catch (e: any) {
+                console.error("Fetch Buildings Error:", e);
+                toast.error(`Failed to load buildings: ${e.response?.data?.message || e.message}`);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchBuildings();
+    }, []);
+
+    const filteredBuildings = buildings.filter(b =>
+        b.name.toLowerCase().includes(search.toLowerCase()) ||
+        b.code.toLowerCase().includes(search.toLowerCase())
+    );
+
+    const handleCreateBuilding = async (e: React.FormEvent) => {
+        e.preventDefault();
+        // API call would go here
+        toast.success("Building created successfully!");
+        setIsDialogOpen(false);
+    };
+
+    return (
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 className="text-3xl font-heading font-bold text-teal-700">{t("buildings.title")}</h1>
+                    <p className="text-gray-500 mt-1">{t("buildings.subtitle")}</p>
+                </div>
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <DialogTrigger asChild>
+                        <Button className="btn-gold">
+                            <Plus className="w-4 h-4 mr-2" />
+                            {t("buildings.addBuilding")}
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-xl p-6">
+                        <DialogHeader className="mb-4">
+                            <DialogTitle className="text-2xl font-heading font-bold text-teal-700">{t("buildings.addBuilding")}</DialogTitle>
+                        </DialogHeader>
+                        <form onSubmit={handleCreateBuilding} className="space-y-5">
+                            <div className="space-y-5">
+                                <div className="grid grid-cols-2 gap-5">
+                                    <div className="space-y-2">
+                                        <Label className="text-gray-700">{t("buildings.buildingName")}</Label>
+                                        <Input placeholder="Kingbridge Tower C" required className="h-10" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="text-gray-700">{t("buildings.code")}</Label>
+                                        <Input placeholder="KT-C" required className="h-10 font-mono" />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-gray-700">{t("buildings.address")}</Label>
+                                    <Textarea placeholder="Full address..." className="resize-none" rows={3} />
+                                </div>
+                                <div className="grid grid-cols-2 gap-5">
+                                    <div className="space-y-2">
+                                        <Label className="text-gray-700">{t("buildings.ownerCompany")}</Label>
+                                        <Input placeholder="Global Lumber Co., Ltd." className="h-10" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="text-gray-700">{t("buildings.ownerName")}</Label>
+                                        <Input placeholder="Mr. Kasin" className="h-10" />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-5">
+                                    <div className="space-y-2">
+                                        <Label className="text-gray-700">{t("buildings.totalFloors")}</Label>
+                                        <Input type="number" placeholder="25" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="text-gray-700">{t("buildings.rentableArea")}</Label>
+                                        <Input type="number" placeholder="15000" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-6">
+                                <Button variant="outline" type="button" onClick={() => setIsDialogOpen(false)} className="px-6">
+                                    {t("common.cancel")}
+                                </Button>
+                                <Button type="submit" className="btn-gold px-6">{t("buildings.createBuilding")}</Button>
+                            </div>
+                        </form>
+                    </DialogContent>
+                </Dialog>
+            </div>
+
+            {/* Search */}
+            <div className="relative max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                    placeholder={t("buildings.searchPlaceholder")}
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="!pl-14"
+                    style={{ paddingLeft: "3.5rem" }}
+                />
+            </div>
+
+            {/* Buildings Grid */}
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {filteredBuildings.map((building) => {
+                    const totalUnits = building.units?.length || 0;
+                    const occupiedUnits = building.units?.filter((u: any) => u.status === 'occupied').length || 0;
+                    const occupancyRate = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0;
+                    return (
+                        <Card key={building.id} className="border-none shadow-md hover:shadow-lg transition-shadow">
+                            <CardHeader className="pb-2">
+                                <div className="flex items-start justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center">
+                                            <Building2 className="w-6 h-6 text-white" />
+                                        </div>
+                                        <div>
+                                            <CardTitle className="text-lg">{building.name}</CardTitle>
+                                            <p className="text-sm text-gray-500">{building.code}</p>
+                                        </div>
+                                    </div>
+                                    <Badge variant={building.status === "active" ? "default" : "secondary"}>
+                                        {building.status}
+                                    </Badge>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="flex items-center gap-2 text-sm text-gray-500">
+                                    <MapPin className="w-4 h-4" />
+                                    <span className="truncate">{building.address}</span>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                    <div className="flex items-center gap-2">
+                                        <Layers className="w-4 h-4 text-gray-400" />
+                                        <span>{building.totalFloors} {t("buildings.floors")}</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-gray-500">{building.rentableArea.toLocaleString()} sqm</span>
+                                    </div>
+                                </div>
+
+                                {/* Occupancy Bar */}
+                                <div>
+                                    <div className="flex justify-between text-sm mb-1">
+                                        <span className="text-gray-500">{t("buildings.occupancy")}</span>
+                                        <span className="font-medium text-gold-600">{occupancyRate}%</span>
+                                    </div>
+                                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-gradient-to-r from-gold-400 to-gold-500 rounded-full transition-all"
+                                            style={{ width: `${occupancyRate}%` }}
+                                        />
+                                    </div>
+                                    <div className="flex justify-between text-xs text-gray-400 mt-1">
+                                        <span>{occupiedUnits} {t("buildings.occupied")}</span>
+                                        <span>{totalUnits - occupiedUnits} {t("buildings.vacant")}</span>
+                                    </div>
+                                </div>
+
+                                <Button variant="outline" className="w-full" asChild>
+                                    <Link href={`/dashboard/buildings/${building.id}`}>
+                                        {t("common.viewDetails")}
+                                    </Link>
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}

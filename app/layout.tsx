@@ -14,10 +14,25 @@ const outfit = Outfit({
   variable: "--font-outfit",
 });
 
+export const viewport = {
+  themeColor: "#0f766e",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+};
+
 export const metadata: Metadata = {
   title: "Kingbridge Tower - Rent Roll System",
   description: "Multi-Company Office Rental Management System",
   manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Rent Roll",
+  },
+  formatDetection: {
+    telephone: false,
+  },
 };
 
 export default function RootLayout({

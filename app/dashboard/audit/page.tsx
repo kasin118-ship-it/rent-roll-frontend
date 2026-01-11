@@ -123,12 +123,13 @@ export default function AuditLogPage() {
 
             <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-white p-4 rounded-lg border shadow-sm">
                 <div className="relative w-full sm:w-[300px]">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <Input
                         placeholder={t("audit.searchPlaceholder")}
-                        className="pl-9"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
+                        className="!pl-10"
+                        style={{ paddingLeft: "2.5rem" }}
                     />
                 </div>
                 <div className="flex gap-2 w-full sm:w-auto">

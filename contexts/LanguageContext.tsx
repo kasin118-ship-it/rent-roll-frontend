@@ -38,6 +38,37 @@ const translations: Record<Language, Record<string, string>> = {
         "common.viewDetails": "View Details",
         "common.customerName": "Customer Name",
         "common.noData": "No data found",
+        "common.showing": "Showing",
+        "common.entries": "entries",
+        "common.page": "Page",
+        "common.previous": "Previous",
+        "common.next": "Next",
+        "common.save": "Save",
+        "contracts.editContract": "Edit Contract",
+        "contracts.editDesc": "Update contract details",
+        "contracts.updateSuccess": "Contract updated successfully!",
+        "contracts.renew": "Renew Contract",
+        "contracts.renewContract": "Renew Contract",
+        "contracts.renewDesc": "Create a new contract based on existing details",
+        "contracts.renewSuccess": "Contract renewed successfully!",
+        "contracts.originalContract": "Original Contract Reference",
+        "contracts.detailTitle": "Contract Details",
+        "contracts.contractNo": "Contract No.",
+        "contracts.customer": "Customer",
+        "contracts.period": "Period",
+
+        "contracts.tab.general": "General Info",
+        "contracts.duration": "Duration",
+        "contracts.notes": "Notes",
+        "contracts.rent": "Rent",
+        "contracts.service": "Service",
+        "contracts.deposit": "Deposit Amount",
+        "contracts.totalRent": "Total Monthly Rent",
+        "contracts.totalService": "Total Service Fee",
+        "contracts.rentalSpaces": "Rental Spaces",
+        "common.close": "Close",
+        "common.select": "Select",
+        "common.alerts": "Alerts",
 
         // Settings Page
         "settings.title": "System Settings",
@@ -108,6 +139,11 @@ const translations: Record<Language, Record<string, string>> = {
         "customers.status.all": "All Customers",
         "customers.status.active": "Active (Has Contract)",
         "customers.status.inactive": "Inactive (No Contract)",
+        "customers.deleteTitle": "Confirm Delete Customer",
+        "customers.deleteConfirm": "Are you sure you want to delete",
+        "customers.deleteWarning": "This action cannot be undone.",
+        "customers.deleteSuccess": "Customer deleted successfully.",
+        "customers.deleteFailed": "Failed to delete customer",
 
         // Buildings Page
         "buildings.title": "Buildings",
@@ -267,6 +303,11 @@ const translations: Record<Language, Record<string, string>> = {
         "reports.expiring.next90Days": "Contracts Expiring in Next 90 Days",
         "reports.table.daysLeft": "Days Left",
 
+        // Contracts - Delete
+        "contracts.deleteTitle": "Confirm Contract Deletion",
+        "contracts.deleteConfirm": "Are you sure you want to delete contract",
+        "contracts.deleteWarning": "This action cannot be undone.",
+
         // Contracts - new fields
         "contracts.table.serviceFee": "Monthly Service Fee",
         "contracts.summary.rent": "Monthly Rent",
@@ -344,6 +385,37 @@ const translations: Record<Language, Record<string, string>> = {
         "common.viewDetails": "ดูรายละเอียด",
         "common.customerName": "ชื่อลูกค้า",
         "common.noData": "ไม่พบข้อมูล",
+        "common.showing": "แสดงรายการที่",
+        "common.entries": "รายการ",
+        "common.page": "หน้า",
+        "common.previous": "ก่อนหน้า",
+        "common.next": "ถัดไป",
+        "common.save": "บันทึก",
+        "contracts.editContract": "แก้ไขสัญญา",
+        "contracts.editDesc": "แก้ไขข้อมูลรายละเอียดสัญญา",
+        "contracts.updateSuccess": "อัปเดตข้อมูลสัญญาเรียบร้อยแล้ว",
+        "contracts.renew": "ต่ออายุสัญญา",
+        "contracts.renewContract": "ต่ออายุสัญญา",
+        "contracts.renewDesc": "สร้างสัญญาใหม่โดยอ้างอิงจากข้อมูลเดิม",
+        "contracts.renewSuccess": "ต่อสัญญาเรียบร้อยแล้ว!",
+        "contracts.originalContract": "อ้างอิงสัญญาเดิม",
+        "contracts.detailTitle": "รายละเอียดสัญญา",
+        "contracts.contractNo": "เลขที่สัญญา",
+        "contracts.customer": "ลูกค้า",
+        "contracts.period": "ระยะเวลาสัญญา",
+
+        "contracts.tab.general": "ข้อมูลทั่วไป",
+        "contracts.duration": "ระยะเวลา",
+        "contracts.notes": "หมายเหตุ",
+        "contracts.rent": "ค่าเช่า",
+        "contracts.service": "ค่าบริการ",
+        "contracts.deposit": "เงินประกัน",
+        "contracts.totalRent": "ค่าเช่ารวมต่อเดือน",
+        "contracts.totalService": "ค่าบริการรวมต่อเดือน",
+        "contracts.rentalSpaces": "พื้นที่เช่า",
+        "common.close": "ปิด",
+        "common.select": "เลือก",
+        "common.alerts": "การแจ้งเตือน",
 
         // Settings Page
         "settings.title": "ตั้งค่าระบบ",
@@ -416,6 +488,11 @@ const translations: Record<Language, Record<string, string>> = {
         "customers.status.all": "ลูกค้าทั้งหมด",
         "customers.status.active": "Active (มีสัญญา)",
         "customers.status.inactive": "Inactive (ไม่มีสัญญา)",
+        "customers.deleteTitle": "ยืนยันการลบลูกค้า",
+        "customers.deleteConfirm": "คุณต้องการลบลูกค้า",
+        "customers.deleteWarning": "การดำเนินการนี้ไม่สามารถย้อนกลับได้",
+        "customers.deleteSuccess": "ลบลูกค้าเรียบร้อยแล้ว",
+        "customers.deleteFailed": "ลบลูกค้าไม่สำเร็จ",
 
         // Buildings Page
         "buildings.title": "อาคาร",
@@ -574,6 +651,11 @@ const translations: Record<Language, Record<string, string>> = {
         "reports.occupancy.monthlyService": "ค่าบริการ/เดือน",
         "reports.expiring.next90Days": "สัญญาที่จะหมดอายุใน 90 วันข้างหน้า",
         "reports.table.daysLeft": "วันคงเหลือ",
+
+        // Contracts - Delete
+        "contracts.deleteTitle": "ยืนยันการลบสัญญา",
+        "contracts.deleteConfirm": "คุณแน่ใจหรือไม่ว่าต้องการลบสัญญา",
+        "contracts.deleteWarning": "การกระทำนี้ไม่สามารถย้อนกลับได้",
 
         // Contracts - new fields
         "contracts.table.serviceFee": "ค่าบริการ/เดือน",

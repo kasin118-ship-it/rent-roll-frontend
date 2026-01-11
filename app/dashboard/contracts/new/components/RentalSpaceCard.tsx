@@ -70,7 +70,7 @@ function RentalSpaceCardComponent({
                         onValueChange={v => onUpdate(space.id, "buildingId", v)}
                     >
                         <SelectTrigger className="bg-white h-9">
-                            <SelectValue placeholder="Select" />
+                            <SelectValue placeholder={t("common.select")} />
                         </SelectTrigger>
                         <SelectContent>
                             {buildings.map(b => (

@@ -52,35 +52,35 @@ export default function CreateBuildingDialog({ open, onOpenChange }: CreateBuild
                         <div className="grid grid-cols-2 gap-5">
                             <div className="space-y-2">
                                 <Label className="text-gray-700">{t("buildings.buildingName")}</Label>
-                                <Input placeholder="Kingbridge Tower C" required className="h-10" />
+                                <Input placeholder="" required className="h-10" />
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-gray-700">{t("buildings.code")}</Label>
-                                <Input placeholder="KT-C" required className="h-10 font-mono" />
+                                <Input placeholder="" required className="h-10 font-mono" />
                             </div>
                         </div>
                         <div className="space-y-2">
                             <Label className="text-gray-700">{t("buildings.address")}</Label>
-                            <Textarea placeholder="Full address..." className="resize-none" rows={3} />
+                            <Textarea placeholder="" className="resize-none" rows={3} />
                         </div>
                         <div className="grid grid-cols-2 gap-5">
                             <div className="space-y-2">
                                 <Label className="text-gray-700">{t("buildings.ownerCompany")}</Label>
-                                <Input placeholder="Global Lumber Co., Ltd." className="h-10" />
+                                <Input placeholder="" className="h-10" />
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-gray-700">{t("buildings.ownerName")}</Label>
-                                <Input placeholder="Mr. Kasin" className="h-10" />
+                                <Input placeholder="" className="h-10" />
                             </div>
                         </div>
                         <div className="grid grid-cols-2 gap-5">
                             <div className="space-y-2">
                                 <Label className="text-gray-700">{t("buildings.totalFloors")}</Label>
-                                <Input type="number" placeholder="25" />
+                                <Input type="number" placeholder="" />
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-gray-700">{t("buildings.rentableArea")}</Label>
-                                <Input type="number" placeholder="15000" />
+                                <Input type="number" placeholder="" />
                             </div>
                         </div>
                     </div>

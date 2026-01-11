@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Bell, Check, Clock, AlertTriangle, Info, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,81 +23,97 @@ interface Alert {
 
 export default function AlertsPage() {
     const { t } = useLanguage();
-    const [alerts, setAlerts] = useState<Alert[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [stats, setStats] = useState({ in30Days: 0, in60Days: 0, in90Days: 0, total: 0 });
+    const [isLoading, setIsLoading] = useState(true); // Keep if needed for initial skeleon or derived
 
-    useEffect(() => {
-        const fetchAlerts = async () => {
-            setIsLoading(true);
-            try {
-                const [contractsRes] = await Promise.all([
-                    api.get("/contracts"),
-                ]);
+    // 1. Fetch Data with useQuery (shares cache with dashboard)
+    const { data: contracts = [], isLoading: isLoadingContracts, error } = useQuery({
+        queryKey: ['dashboard', 'contracts'], // Same key as dashboard for shared cache
+        queryFn: async () => {
+            console.log('[Alerts] Fetching contracts...');
+            const res = await api.get("/contracts");
+            console.log('[Alerts] Response:', res.data);
+            return res.data?.data || res.data || [];
+        },
+        staleTime: 1000 * 60 * 5, // 5 mins
+    });
 
-                const contracts = contractsRes.data?.data || contractsRes.data || [];
-                const today = new Date();
-                const activeContracts = contracts.filter((c: any) => c.status === "active");
+    // Debug logs
+    console.log('[Alerts] isLoading:', isLoadingContracts);
+    console.log('[Alerts] contracts count:', contracts.length);
+    console.log('[Alerts] error:', error);
 
-                // Calculate expiring contracts
-                const days30 = new Date(); days30.setDate(today.getDate() + 30);
-                const days60 = new Date(); days60.setDate(today.getDate() + 60);
-                const days90 = new Date(); days90.setDate(today.getDate() + 90);
+    // 2. Derive Alerts and Stats with useMemo
+    const { alerts, stats } = useMemo(() => {
+        const today = new Date();
+        const days30 = new Date(); days30.setDate(today.getDate() + 30);
+        const days60 = new Date(); days60.setDate(today.getDate() + 60);
+        const days90 = new Date(); days90.setDate(today.getDate() + 90);
 
-                let in30 = 0, in60 = 0, in90 = 0;
-                const alertsList: Alert[] = [];
+        let in30 = 0, in60 = 0, in90 = 0;
+        const alertsList: Alert[] = [];
+        const activeContracts = contracts.filter((c: any) => c.status === "active");
 
-                activeContracts.forEach((contract: any) => {
-                    const endDate = new Date(contract.endDate);
-                    if (endDate <= days30 && endDate >= today) {
-                        in30++;
-                        alertsList.push({
-                            id: contract.id,
-                            title: "Contract Expiring Soon",
-                            message: `Contract #${contract.contractNo} for ${contract.customer?.name || "Unknown"} expires in ${Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))} days.`,
-                            type: "warning",
-                            timestamp: new Date().toISOString(),
-                            read: false,
-                            contractNo: contract.contractNo,
-                        });
-                    } else if (endDate <= days60 && endDate > days30) {
-                        in60++;
-                        alertsList.push({
-                            id: contract.id,
-                            title: "Contract Expiring",
-                            message: `Contract #${contract.contractNo} for ${contract.customer?.name || "Unknown"} expires in ${Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))} days.`,
-                            type: "info",
-                            timestamp: new Date().toISOString(),
-                            read: false,
-                            contractNo: contract.contractNo,
-                        });
-                    } else if (endDate <= days90 && endDate > days60) {
-                        in90++;
-                    }
+        activeContracts.forEach((contract: any) => {
+            const endDate = new Date(contract.endDate);
+            if (endDate <= days30 && endDate >= today) {
+                in30++;
+                alertsList.push({
+                    id: contract.id,
+                    title: "Contract Expiring Soon",
+                    message: `Contract #${contract.contractNo} for ${contract.customer?.name || "Unknown"} expires in ${Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))} days.`,
+                    type: "warning",
+                    timestamp: new Date().toISOString(),
+                    read: false,
+                    contractNo: contract.contractNo,
                 });
-
-                setStats({ in30Days: in30, in60Days: in60, in90Days: in90, total: alertsList.length });
-                setAlerts(alertsList);
-
-            } catch (error) {
-                console.error("Failed to fetch alerts:", error);
-                toast.error("Failed to load alerts");
-            } finally {
-                setIsLoading(false);
+            } else if (endDate <= days60 && endDate > days30) {
+                in60++;
+                alertsList.push({
+                    id: contract.id,
+                    title: "Contract Expiring",
+                    message: `Contract #${contract.contractNo} for ${contract.customer?.name || "Unknown"} expires in ${Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))} days.`,
+                    type: "info",
+                    timestamp: new Date().toISOString(),
+                    read: false,
+                    contractNo: contract.contractNo,
+                });
+            } else if (endDate <= days90 && endDate > days60) {
+                in90++;
             }
-        };
+        });
 
-        fetchAlerts();
-    }, []);
+        return {
+            alerts: alertsList,
+            stats: { in30Days: in30, in60Days: in60, in90Days: in90, total: alertsList.length }
+        };
+    }, [contracts]);
+
+    // Local state for read status (in a real app, this should be persisted or memoized differently if complex)
+    // For now, we'll initialize it from memoized alerts, but `useMemo` runs on every render if dependencies change.
+    // Actually, `alerts` will be recreated when `contracts` change. 
+    // If we want "mark as read" to work, we need a local state that tracks read IDs, 
+    // or we need to separate the "source" alerts from the "display" alerts.
+    // Simpler approach for this refactor: 
+    // 1. `baseAlerts` from useMemo.
+    // 2. `readAlertIds` state.
+    // 3. `displayAlerts` = baseAlerts.map(a => readAlertIds.includes(a.id) ? {...a, read: true} : a)
+
+    const [readAlertIds, setReadAlertIds] = useState<Set<string>>(new Set());
+
+    const displayAlerts = useMemo(() => {
+        return alerts.map(a => ({
+            ...a,
+            read: readAlertIds.has(a.id)
+        }));
+    }, [alerts, readAlertIds]);
 
     const handleMarkAsRead = (id: string) => {
-        setAlerts(alerts.map(alert =>
-            alert.id === id ? { ...alert, read: true } : alert
-        ));
+        setReadAlertIds(prev => new Set(prev).add(id));
     };
 
     const handleMarkAllAsRead = () => {
-        setAlerts(alerts.map(alert => ({ ...alert, read: true })));
+        const allIds = alerts.map(a => a.id);
+        setReadAlertIds(new Set([...Array.from(readAlertIds), ...allIds]));
     };
 
     const getIcon = (type: string) => {
@@ -119,7 +136,7 @@ export default function AlertsPage() {
 
     const unreadCount = alerts.filter(a => !a.read).length;
 
-    if (isLoading) {
+    if (isLoadingContracts) {
         return (
             <div className="flex items-center justify-center h-96">
                 <Loader2 className="w-8 h-8 animate-spin text-teal-600" />

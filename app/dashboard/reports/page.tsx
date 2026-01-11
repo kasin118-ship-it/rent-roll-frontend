@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 import { Button } from "@/components/ui/button";
-import { Download, Filter, TrendingUp, DollarSign, Building2, AlertTriangle, Wrench, Loader2 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Download, TrendingUp, DollarSign, Building2, AlertTriangle, Wrench, Loader2 } from "lucide-react";
 import {
     BarChart,
     Bar,
@@ -61,119 +63,198 @@ interface ExpiringContract {
 
 export default function ReportsPage() {
     const { t } = useLanguage();
-    const [isLoading, setIsLoading] = useState(true);
-    const [revenueStats, setRevenueStats] = useState<RevenueStats>({
-        monthlyRent: 0,
-        monthlyServiceFee: 0,
-        totalMonthly: 0,
-        activeContracts: 0,
+    const [isLoading, setIsLoading] = useState(true); // Keep for skeleton if needed, or derive from queries
+    const currentYear = new Date().getFullYear();
+    const [selectedYear, setSelectedYear] = useState(currentYear); // Default to current year
+    const [selectedBuildingIds, setSelectedBuildingIds] = useState<string[]>([]); // Empty = all buildings
+    const [dateRange, setDateRange] = useState<{ from: Date; to: Date } | undefined>({
+        from: new Date(currentYear, 0, 1),
+        to: new Date(currentYear, 11, 31),
     });
-    const [buildingStats, setBuildingStats] = useState<BuildingStats[]>([]);
-    const [expiringContracts, setExpiringContracts] = useState<ExpiringContract[]>([]);
-    const [occupancyStats, setOccupancyStats] = useState({ rate: 0, occupied: 0, vacant: 0, total: 0 });
 
-    useEffect(() => {
-        const fetchReportData = async () => {
-            setIsLoading(true);
-            try {
-                const [contractsRes, buildingsRes] = await Promise.all([
-                    api.get("/contracts"),
-                    api.get("/buildings/stats"),
-                ]);
+    // Sync dateRange when selectedYear changes
+    const handleYearChange = (year: number) => {
+        setSelectedYear(year);
+        setDateRange({
+            from: new Date(year, 0, 1),
+            to: new Date(year, 11, 31),
+        });
+    };
 
-                const contracts = contractsRes.data?.data || contractsRes.data || [];
-                const buildingStatsData = buildingsRes.data?.data || buildingsRes.data || {};
-                const today = new Date();
+    // 1. Fetch Data with useQuery (shares cache with dashboard)
+    const { data: contracts = [], isLoading: isLoadingContracts } = useQuery({
+        queryKey: ['dashboard', 'contracts'], // Same key as dashboard for shared cache
+        queryFn: async () => {
+            const res = await api.get("/contracts");
+            return res.data?.data || res.data || [];
+        },
+        staleTime: 1000 * 60 * 5, // 5 mins
+    });
 
-                // Filter active contracts
-                const activeContracts = contracts.filter((c: any) => c.status === "active");
+    // Fetch buildings list for filter dropdown
+    const { data: buildings = [] } = useQuery({
+        queryKey: ['buildings'],
+        queryFn: async () => {
+            const res = await api.get("/buildings");
+            return res.data?.data || res.data || [];
+        },
+        staleTime: 1000 * 60 * 5, // 5 mins
+    });
 
-                // Calculate revenue
-                let monthlyRent = 0;
-                let monthlyServiceFee = 0;
+    const { data: buildingStatsData = {}, isLoading: isLoadingBuildings } = useQuery({
+        queryKey: ['buildingStats'],
+        queryFn: async () => {
+            const res = await api.get("/buildings/stats");
+            return res.data?.data || res.data || {};
+        },
+        staleTime: 1000 * 60 * 5, // 5 mins
+    });
 
-                activeContracts.forEach((contract: any) => {
-                    contract.contractUnits?.forEach((unit: any) => {
-                        const currentPeriod = unit.rentPeriods?.find((period: any) => {
-                            const start = new Date(period.startDate);
-                            const end = new Date(period.endDate);
-                            return today >= start && today <= end;
-                        });
 
-                        if (currentPeriod) {
-                            monthlyRent += parseFloat(currentPeriod.rentAmount) || 0;
-                            monthlyServiceFee += parseFloat(currentPeriod.serviceFee) || 0;
+    const isPageLoading = isLoadingContracts || isLoadingBuildings;
+
+    // Helper to get building ID from contract
+    const getContractBuildingId = (contract: any): string | null => {
+        const firstUnit = contract.contractUnits?.[0];
+        return firstUnit?.building?.id || firstUnit?.directBuilding?.id || firstUnit?.unit?.building?.id || null;
+    };
+
+    // 2. Derive State with useMemo - filtered by dateRange AND building
+    const revenueStats = useMemo(() => {
+        let monthlyRent = 0;
+        let monthlyServiceFee = 0;
+
+        if (!dateRange?.from || !dateRange?.to) {
+            return { monthlyRent: 0, monthlyServiceFee: 0, totalMonthly: 0, activeContracts: 0 };
+        }
+
+        const rangeStart = dateRange.from;
+        const rangeEnd = dateRange.to;
+
+        // Only count contracts that are active AND have start/end dates overlapping with dateRange
+        const activeContracts = contracts.filter((c: any) => {
+            if (c.status !== "active") return false;
+            const contractStart = new Date(c.startDate);
+            const contractEnd = new Date(c.endDate);
+            // Contract overlaps with date range
+            if (!(contractStart <= rangeEnd && contractEnd >= rangeStart)) return false;
+
+            // Building filter: if selectedBuildingIds is empty, show all; otherwise check if contract's building is selected
+            if (selectedBuildingIds.length > 0) {
+                const buildingId = getContractBuildingId(c);
+                if (!buildingId || !selectedBuildingIds.includes(buildingId)) return false;
+            }
+            return true;
+        });
+
+        activeContracts.forEach((contract: any) => {
+            contract.contractUnits?.forEach((unit: any) => {
+                // Find rent periods that overlap with the selected date range
+                unit.rentPeriods?.forEach((period: any) => {
+                    const periodStart = new Date(period.startDate);
+                    const periodEnd = new Date(period.endDate);
+                    // Period overlaps with date range
+                    if (periodStart <= rangeEnd && periodEnd >= rangeStart) {
+                        monthlyRent += parseFloat(period.rentAmount) || 0;
+                        monthlyServiceFee += parseFloat(period.serviceFee) || 0;
+                    }
+                });
+            });
+        });
+
+        return {
+            monthlyRent,
+            monthlyServiceFee,
+            totalMonthly: monthlyRent + monthlyServiceFee,
+            activeContracts: activeContracts.length,
+        };
+    }, [contracts, dateRange, selectedBuildingIds]);
+
+    // Calculate occupancy from buildings data, filtered by selection
+    const occupancyStats = useMemo(() => {
+        // If no building filter, use all buildings
+        const filteredBuildings = selectedBuildingIds.length > 0
+            ? buildings.filter((b: any) => selectedBuildingIds.includes(b.id))
+            : buildings;
+
+        let totalArea = 0;
+        let rentedArea = 0;
+
+        filteredBuildings.forEach((b: any) => {
+            totalArea += Number(b.rentableArea) || 0;
+            rentedArea += Number(b.rentedArea) || 0;
+        });
+
+        const rate = totalArea > 0 ? Math.round((rentedArea / totalArea) * 100) : 0;
+
+        return {
+            rate,
+            occupied: rentedArea,
+            vacant: totalArea - rentedArea,
+            total: totalArea,
+        };
+    }, [buildings, selectedBuildingIds]);
+
+    const expiringContracts = useMemo(() => {
+        if (!dateRange?.from || !dateRange?.to) {
+            return [];
+        }
+
+        const rangeStart = dateRange.from;
+        const rangeEnd = dateRange.to;
+
+        return contracts
+            .filter((c: any) => c.status === "active")
+            .filter((c: any) => {
+                const endDate = new Date(c.endDate);
+                // Show contracts expiring within the selected date range
+                if (!(endDate >= rangeStart && endDate <= rangeEnd)) return false;
+
+                // Building filter
+                if (selectedBuildingIds.length > 0) {
+                    const buildingId = getContractBuildingId(c);
+                    if (!buildingId || !selectedBuildingIds.includes(buildingId)) return false;
+                }
+                return true;
+            })
+            .map((c: any) => {
+                const endDate = new Date(c.endDate);
+                // Calculate days left from rangeEnd (the reference date)
+                const daysLeft = Math.ceil((endDate.getTime() - rangeEnd.getTime()) / (1000 * 60 * 60 * 24));
+
+                let rent = 0, serviceFee = 0;
+                // Get building name from first contract unit
+                const firstUnit = c.contractUnits?.[0];
+                const buildingName = firstUnit?.building?.name || firstUnit?.directBuilding?.name || firstUnit?.unit?.building?.name || "-";
+
+                c.contractUnits?.forEach((unit: any) => {
+                    // Get rent period that overlaps with selected range
+                    unit.rentPeriods?.forEach((period: any) => {
+                        const periodStart = new Date(period.startDate);
+                        const periodEnd = new Date(period.endDate);
+                        if (periodStart <= rangeEnd && periodEnd >= rangeStart) {
+                            rent += parseFloat(period.rentAmount) || 0;
+                            serviceFee += parseFloat(period.serviceFee) || 0;
                         }
                     });
                 });
 
-                setRevenueStats({
-                    monthlyRent,
-                    monthlyServiceFee,
-                    totalMonthly: monthlyRent + monthlyServiceFee,
-                    activeContracts: activeContracts.length,
-                });
+                return {
+                    id: c.id,
+                    contractNo: c.contractNo,
+                    customerName: c.customer?.name || "Unknown",
+                    buildingName,
+                    startDate: c.startDate,
+                    expiryDate: c.endDate,
+                    daysLeft,
+                    rent,
+                    serviceFee,
+                };
+            })
+            .sort((a: any, b: any) => a.daysLeft - b.daysLeft);
+    }, [contracts, dateRange, selectedBuildingIds]);
 
-                // Occupancy stats
-                setOccupancyStats({
-                    rate: buildingStatsData.occupancyRate || 0,
-                    occupied: buildingStatsData.occupiedUnits || 0,
-                    vacant: (buildingStatsData.totalUnits || 0) - (buildingStatsData.occupiedUnits || 0),
-                    total: buildingStatsData.totalUnits || 0,
-                });
-
-                // Expiring contracts (next 90 days)
-                const days90 = new Date();
-                days90.setDate(today.getDate() + 90);
-
-                const expiring: ExpiringContract[] = activeContracts
-                    .filter((c: any) => {
-                        const endDate = new Date(c.endDate);
-                        return endDate <= days90 && endDate >= today;
-                    })
-                    .map((c: any) => {
-                        const endDate = new Date(c.endDate);
-                        const daysLeft = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-
-                        let rent = 0, serviceFee = 0;
-                        c.contractUnits?.forEach((unit: any) => {
-                            const currentPeriod = unit.rentPeriods?.find((period: any) => {
-                                const start = new Date(period.startDate);
-                                const end = new Date(period.endDate);
-                                return today >= start && today <= end;
-                            });
-                            if (currentPeriod) {
-                                rent += parseFloat(currentPeriod.rentAmount) || 0;
-                                serviceFee += parseFloat(currentPeriod.serviceFee) || 0;
-                            }
-                        });
-
-                        return {
-                            id: c.id,
-                            contractNo: c.contractNo,
-                            customerName: c.customer?.name || "Unknown",
-                            expiryDate: c.endDate,
-                            daysLeft,
-                            rent,
-                            serviceFee,
-                        };
-                    })
-                    .sort((a: ExpiringContract, b: ExpiringContract) => a.daysLeft - b.daysLeft);
-
-                setExpiringContracts(expiring);
-
-            } catch (error) {
-                console.error("Failed to fetch report data:", error);
-                toast.error("Failed to load report data");
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchReportData();
-    }, []);
-
-    if (isLoading) {
+    if (isPageLoading) {
         return (
             <div className="flex items-center justify-center h-96">
                 <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
@@ -201,18 +282,96 @@ export default function ReportsPage() {
                 </Button>
             </div>
 
-            {/* Filters */}
+            {/* Year Filter Tabs */}
             <Card className="border-none shadow-md">
                 <CardContent className="p-4">
-                    <div className="flex flex-col md:flex-row gap-4 items-end">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-700">{t("reports.startDate")} - {t("reports.endDate")}</label>
-                            <DatePickerWithRange className="w-full md:w-[300px]" />
+                    <div className="flex flex-col md:flex-row md:items-center gap-4">
+                        <div className="flex items-center gap-3">
+                            <label className="text-sm font-medium text-gray-700">เลือกปี:</label>
+                            <div className="flex gap-2">
+                                <Button
+                                    variant={selectedYear === currentYear ? "default" : "outline"}
+                                    size="sm"
+                                    className={selectedYear === currentYear ? "bg-teal-600 hover:bg-teal-700" : ""}
+                                    onClick={() => handleYearChange(currentYear)}
+                                >
+                                    ปีนี้ ({currentYear})
+                                </Button>
+                                <Button
+                                    variant={selectedYear === currentYear - 1 ? "default" : "outline"}
+                                    size="sm"
+                                    className={selectedYear === currentYear - 1 ? "bg-teal-600 hover:bg-teal-700" : ""}
+                                    onClick={() => handleYearChange(currentYear - 1)}
+                                >
+                                    ปีที่แล้ว ({currentYear - 1})
+                                </Button>
+                                <Button
+                                    variant={selectedYear === currentYear - 2 ? "default" : "outline"}
+                                    size="sm"
+                                    className={selectedYear === currentYear - 2 ? "bg-teal-600 hover:bg-teal-700" : ""}
+                                    onClick={() => handleYearChange(currentYear - 2)}
+                                >
+                                    {currentYear - 2}
+                                </Button>
+                            </div>
                         </div>
-                        <Button className="btn-gold">
-                            <Filter className="w-4 h-4 mr-2" />
-                            {t("reports.applyFilter")}
-                        </Button>
+                        <div className="border-l border-gray-200 pl-4 flex items-center gap-3">
+                            <label className="text-sm font-medium text-gray-700">หรือเลือกช่วง:</label>
+                            <DatePickerWithRange
+                                className="w-[280px]"
+                                dateRange={dateRange}
+                                onDateChange={(range) => setDateRange(range as { from: Date; to: Date } | undefined)}
+                            />
+                        </div>
+                        <div className="border-l border-gray-200 pl-4 flex items-center gap-3">
+                            <label className="text-sm font-medium text-gray-700">อาคาร:</label>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button variant="outline" className="min-w-[200px] justify-between">
+                                        <span>
+                                            {selectedBuildingIds.length === 0
+                                                ? "ทั้งหมด"
+                                                : `เลือก ${selectedBuildingIds.length} อาคาร`}
+                                        </span>
+                                        <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[200px] p-0" align="start">
+                                    <div className="max-h-60 overflow-auto">
+                                        {buildings.map((b: any) => (
+                                            <label
+                                                key={b.id}
+                                                className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 cursor-pointer"
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedBuildingIds.includes(b.id)}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) {
+                                                            setSelectedBuildingIds([...selectedBuildingIds, b.id]);
+                                                        } else {
+                                                            setSelectedBuildingIds(selectedBuildingIds.filter((id: string) => id !== b.id));
+                                                        }
+                                                    }}
+                                                    className="w-4 h-4 text-teal-600 rounded border-gray-300 focus:ring-teal-500"
+                                                />
+                                                <span className="text-sm">{b.name}</span>
+                                            </label>
+                                        ))}
+                                        {selectedBuildingIds.length > 0 && (
+                                            <button
+                                                onClick={() => setSelectedBuildingIds([])}
+                                                className="w-full px-3 py-2 text-sm text-gray-500 hover:text-gray-700 border-t text-left hover:bg-gray-50"
+                                            >
+                                                ล้างตัวกรอง
+                                            </button>
+                                        )}
+                                    </div>
+                                </PopoverContent>
+                            </Popover>
+                        </div>
                     </div>
                 </CardContent>
             </Card>
@@ -340,19 +499,19 @@ export default function ReportsPage() {
                         <Card className="border-none shadow-sm">
                             <CardContent className="p-4">
                                 <p className="text-gray-500 text-sm font-medium">{t("reports.occupancy.occupied")}</p>
-                                <div className="text-2xl font-bold mt-1 text-green-600">{occupancyStats.occupied}</div>
+                                <div className="text-2xl font-bold mt-1 text-green-600">{occupancyStats.occupied.toLocaleString()} ตร.ม.</div>
                             </CardContent>
                         </Card>
                         <Card className="border-none shadow-sm">
                             <CardContent className="p-4">
                                 <p className="text-gray-500 text-sm font-medium">{t("reports.occupancy.vacant")}</p>
-                                <div className="text-2xl font-bold mt-1 text-red-500">{occupancyStats.vacant}</div>
+                                <div className="text-2xl font-bold mt-1 text-red-500">{occupancyStats.vacant.toLocaleString()} ตร.ม.</div>
                             </CardContent>
                         </Card>
                         <Card className="border-none shadow-sm">
                             <CardContent className="p-4">
-                                <p className="text-gray-500 text-sm font-medium">Total Units</p>
-                                <div className="text-2xl font-bold mt-1 text-gray-700">{occupancyStats.total}</div>
+                                <p className="text-gray-500 text-sm font-medium">พื้นที่ทั้งหมด</p>
+                                <div className="text-2xl font-bold mt-1 text-gray-700">{occupancyStats.total.toLocaleString()} ตร.ม.</div>
                             </CardContent>
                         </Card>
                     </div>
@@ -379,17 +538,21 @@ export default function ReportsPage() {
                                         <TableRow>
                                             <TableHead>{t("contracts.table.contractNo")}</TableHead>
                                             <TableHead>{t("contracts.table.customer")}</TableHead>
-                                            <TableHead>{t("contracts.table.period")}</TableHead>
+                                            <TableHead>อาคาร</TableHead>
+                                            <TableHead>วันที่เริ่มสัญญา</TableHead>
+                                            <TableHead>วันที่หมดอายุ</TableHead>
                                             <TableHead className="text-right">{t("reports.table.daysLeft")}</TableHead>
                                             <TableHead className="text-right">{t("contracts.table.monthlyRent")}</TableHead>
                                             <TableHead className="text-right">{t("contracts.table.serviceFee") || "Service Fee"}</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {expiringContracts.map(contract => (
+                                        {expiringContracts.map((contract: any) => (
                                             <TableRow key={contract.id}>
                                                 <TableCell className="font-medium">{contract.contractNo}</TableCell>
                                                 <TableCell>{contract.customerName}</TableCell>
+                                                <TableCell>{contract.buildingName}</TableCell>
+                                                <TableCell>{new Date(contract.startDate).toLocaleDateString("th-TH")}</TableCell>
                                                 <TableCell>{new Date(contract.expiryDate).toLocaleDateString("th-TH")}</TableCell>
                                                 <TableCell className="text-right">
                                                     <Badge

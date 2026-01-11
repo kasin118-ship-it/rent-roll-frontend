@@ -10,6 +10,20 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { Trash2 } from "lucide-react";
+import { RentPeriod } from "./contracts/new/types";
+
+interface ContractUnit {
+    areaSqm: string | number;
+    rentPeriods?: RentPeriod[];
+}
+
+interface Contract {
+    id: string;
+    status: string;
+    contractNo: string;
+    endDate: string | Date;
+    contractUnits?: ContractUnit[];
+}
 
 interface DashboardStats {
     totalBuildings: number;
@@ -71,13 +85,13 @@ export default function DashboardPage() {
     const statsData = useMemo(() => {
         if (isLoading) return { stats: null, revenue: null, alerts: [] };
 
-        const activeContracts = contracts.filter((c: any) => c.status === "active");
+        const activeContracts = contracts.filter((c: Contract) => c.status === "active");
         const today = new Date();
         const days30 = new Date();
         days30.setDate(today.getDate() + 30);
 
         // Expiring Contracts
-        const expiringContracts = activeContracts.filter((c: any) => {
+        const expiringContracts = activeContracts.filter((c: Contract) => {
             const endDate = new Date(c.endDate);
             return endDate <= days30 && endDate >= today;
         });
@@ -87,19 +101,19 @@ export default function DashboardPage() {
         let monthlyServiceFee = 0;
         let occupiedArea = 0;
 
-        activeContracts.forEach((contract: any) => {
-            contract.contractUnits?.forEach((unit: any) => {
-                occupiedArea += parseFloat(unit.areaSqm) || 0;
+        activeContracts.forEach((contract: Contract) => {
+            contract.contractUnits?.forEach((unit: ContractUnit) => {
+                occupiedArea += parseFloat(unit.areaSqm.toString()) || 0;
                 // Find current rent period
-                const currentPeriod = unit.rentPeriods?.find((period: any) => {
-                    const start = new Date(period.startDate);
-                    const end = new Date(period.endDate);
+                const currentPeriod = unit.rentPeriods?.find((period: RentPeriod) => {
+                    const start = period.startDate ? new Date(period.startDate) : new Date(0);
+                    const end = period.endDate ? new Date(period.endDate) : new Date(8640000000000000); // Far future
                     return today >= start && today <= end;
                 });
 
                 if (currentPeriod) {
-                    monthlyRent += parseFloat(currentPeriod.rentAmount) || 0;
-                    monthlyServiceFee += parseFloat(currentPeriod.serviceFee) || 0;
+                    monthlyRent += Number(currentPeriod.monthlyRent) || 0;
+                    monthlyServiceFee += Number(currentPeriod.serviceFee) || 0;
                 }
             });
         });
@@ -119,7 +133,7 @@ export default function DashboardPage() {
                 occupiedArea: Math.round(occupiedArea),
                 totalArea: buildingStats.totalUnits || 0,
             },
-            alerts: expiringContracts.slice(0, 3).map((c: any) => {
+            alerts: expiringContracts.slice(0, 3).map((c: Contract) => {
                 const daysLeft = Math.ceil((new Date(c.endDate).getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
                 return {
                     id: c.id,
@@ -254,17 +268,21 @@ export default function DashboardPage() {
                         {alerts.length === 0 ? (
                             <p className="text-gray-400 text-sm">{t("alerts.noAlerts") || "No alerts"}</p>
                         ) : (
-                            alerts.map((alert) => (
-                                <div
-                                    key={alert.id}
-                                    className={`p-4 rounded-lg border-l-4 ${alert.type === "warning"
-                                        ? "bg-amber-50 border-amber-400"
-                                        : "bg-blue-50 border-blue-400"
-                                        }`}
-                                >
-                                    <p className="text-sm text-gray-700">{alert.message}</p>
-                                </div>
-                            ))
+                            alerts.map((alert) => {
+                                // Simplified class logic to avoid template string nesting issues
+                                const alertClass = alert.type === "warning"
+                                    ? "bg-amber-50 border-amber-400"
+                                    : "bg-blue-50 border-blue-400";
+
+                                return (
+                                    <div
+                                        key={alert.id}
+                                        className={`p-4 rounded-lg border-l-4 ${alertClass}`}
+                                    >
+                                        <p className="text-sm text-gray-700">{alert.message}</p>
+                                    </div>
+                                );
+                            })
                         )}
                     </div>
                 </CardContent>

@@ -129,11 +129,17 @@ export default function SettingsPage() {
 
         setIsResetting(true);
         try {
-            await new Promise(resolve => setTimeout(resolve, 3000));
-            toast.success("Factory reset completed. Please login again.");
+            const { api } = await import("@/lib/api");
+            console.log('[Reset] Calling POST /seed/reset...');
+            const res = await api.post("/seed/reset");
+            console.log('[Reset] Response:', res.data);
+            toast.success(res.data?.message || "Factory reset completed. Please login again.");
             setIsResetDialogOpen(false);
-        } catch (error) {
-            toast.error("Reset failed");
+            // Reload page to reflect reset
+            window.location.reload();
+        } catch (error: any) {
+            console.error('[Reset] Error:', error);
+            toast.error("Reset failed: " + (error?.response?.data?.message || error.message));
         } finally {
             setIsResetting(false);
             setResetConfirmation("");
@@ -144,17 +150,21 @@ export default function SettingsPage() {
         // eslint-disable-next-line no-restricted-globals
         if (!confirm("This will generate test data (Buildings, Customers, Contracts). Continue?")) return;
 
+        console.log('[Seed] Starting seed...');
         setIsSeeding(true);
         toast.info("Generating mock data... This may take a moment.");
 
         try {
             const { api } = await import("@/lib/api");
+            console.log('[Seed] Calling POST /seed...');
             const res = await api.post("/seed");
+            console.log('[Seed] Response:', res.data);
             toast.success(res.data?.message || "Mock data generated successfully!");
             // Reload page to see new data
             window.location.reload();
         } catch (error: any) {
-            console.error(error);
+            console.error('[Seed] Error:', error);
+            console.error('[Seed] Response:', error?.response?.data);
             toast.error("Seeding failed: " + (error?.response?.data?.message || error.message));
         } finally {
             setIsSeeding(false);
@@ -434,33 +444,73 @@ export default function SettingsPage() {
                 </CardContent>
             </Card>
 
-            {/* Mock Data (Dev) */}
+            {/* Mock Data (Dev) - Step-by-Step */}
             <Card className="border-none shadow-md border-indigo-200 bg-indigo-50/30">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-indigo-700">
                         <Database className="w-5 h-5" />
                         Mock Data Generation
                     </CardTitle>
-                    <CardDescription>Generate test data (300 Customers, Contracts 2023-2025)</CardDescription>
+                    <CardDescription>Generate test data step-by-step: Buildings → Customers → Contracts</CardDescription>
                 </CardHeader>
-                <CardContent>
-                    <Button
-                        onClick={handleSeedData}
-                        disabled={isSeeding}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                    >
-                        {isSeeding ? (
-                            <>
-                                <div className="w-4 h-4 mr-2 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                Generating...
-                            </>
-                        ) : (
-                            <>
-                                <Database className="w-4 h-4 mr-2" />
-                                Generate Mock Data
-                            </>
-                        )}
-                    </Button>
+                <CardContent className="space-y-4">
+                    <div className="grid grid-cols-3 gap-3">
+                        <Button
+                            onClick={async () => {
+                                toast.loading("Creating buildings...");
+                                try {
+                                    const { api } = await import("@/lib/api");
+                                    const res = await api.post("/seed/buildings");
+                                    toast.dismiss();
+                                    toast.success(res.data?.message || "Buildings created!");
+                                } catch (e: any) {
+                                    toast.dismiss();
+                                    toast.error(e?.response?.data?.message || e.message);
+                                }
+                            }}
+                            className="bg-teal-600 hover:bg-teal-700 text-white flex-col h-auto py-3"
+                        >
+                            <Database className="w-5 h-5 mb-1" />
+                            <span className="text-xs">1. Buildings</span>
+                        </Button>
+                        <Button
+                            onClick={async () => {
+                                toast.loading("Creating customers...");
+                                try {
+                                    const { api } = await import("@/lib/api");
+                                    const res = await api.post("/seed/customers");
+                                    toast.dismiss();
+                                    toast.success(res.data?.message || "Customers created!");
+                                } catch (e: any) {
+                                    toast.dismiss();
+                                    toast.error(e?.response?.data?.message || e.message);
+                                }
+                            }}
+                            className="bg-amber-600 hover:bg-amber-700 text-white flex-col h-auto py-3"
+                        >
+                            <Database className="w-5 h-5 mb-1" />
+                            <span className="text-xs">2. Customers</span>
+                        </Button>
+                        <Button
+                            onClick={async () => {
+                                toast.loading("Creating contracts (may take a moment)...");
+                                try {
+                                    const { api } = await import("@/lib/api");
+                                    const res = await api.post("/seed/contracts");
+                                    toast.dismiss();
+                                    toast.success(res.data?.message || "Contracts created!");
+                                } catch (e: any) {
+                                    toast.dismiss();
+                                    toast.error(e?.response?.data?.message || e.message);
+                                }
+                            }}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white flex-col h-auto py-3"
+                        >
+                            <Database className="w-5 h-5 mb-1" />
+                            <span className="text-xs">3. Contracts</span>
+                        </Button>
+                    </div>
+                    <p className="text-xs text-gray-500">Click in order: Buildings first, then Customers, then Contracts.</p>
                 </CardContent>
             </Card>
 

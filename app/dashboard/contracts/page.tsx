@@ -3,7 +3,8 @@
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Plus, Search, Filter, FileText, Calendar, Users, Wrench, Building2, ArrowUpDown, ArrowUp, ArrowDown, MoreHorizontal, Pencil, Trash2, RefreshCw, Eye } from "lucide-react";
+import { Plus, Search, Filter, FileText, Calendar, Users, Wrench, Building2, ArrowUpDown, ArrowUp, ArrowDown, MoreHorizontal, Pencil, Trash2, RefreshCw, Eye, DollarSign, Wallet } from "lucide-react";
+import { ContractDetailModal } from "@/components/contracts/ContractDetailModal";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -89,11 +90,17 @@ export default function ContractsPage() {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [contractToDelete, setContractToDelete] = useState<Contract | null>(null);
 
+    // View Modal State
+    const [viewDialogOpen, setViewDialogOpen] = useState(false);
+    const [selectedContractId, setSelectedContractId] = useState<string | null>(null);
+
 
 
     // Helper to get building name from contract
     const getBuildingName = (contract: Contract): string => {
         const firstUnit = contract.contractUnits?.[0];
+        // TypeORM returns using entity property name 'building', not query alias
+        if (firstUnit?.building?.name) return firstUnit.building.name;
         if (firstUnit?.directBuilding?.name) return firstUnit.directBuilding.name;
         if (firstUnit?.unit?.building?.name) return firstUnit.unit.building.name;
         return "-";
@@ -219,45 +226,83 @@ export default function ContractsPage() {
         }, { rent: 0, fee: 0 });
     }, [sortedContracts]);
 
+    // Pagination
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 20;
+
+    // Reset page on filter change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [search, statusFilters, buildingFilters]);
+
+    // Paginate data
+    const totalPages = Math.ceil(sortedContracts.length / itemsPerPage);
+    const paginatedContracts = useMemo(() => {
+        return sortedContracts.slice(
+            (currentPage - 1) * itemsPerPage,
+            currentPage * itemsPerPage
+        );
+    }, [sortedContracts, currentPage]);
+
     return (
         <div className="space-y-6">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-heading font-bold text-teal-700">{t("contracts.title")}</h1>
-                    <p className="text-gray-500 mt-1">{t("contracts.subtitle")}</p>
+            {/* Compact Header & Stats */}
+            <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-2xl font-heading font-bold text-teal-700">{t("contracts.title")}</h1>
+                        <p className="text-xs text-gray-500">{t("contracts.subtitle")}</p>
+                    </div>
+                    <Link href="/dashboard/contracts/new">
+                        <Button size="sm" className="btn-gold h-9">
+                            <Plus className="w-4 h-4 mr-2" />
+                            {t("contracts.newContract")}
+                        </Button>
+                    </Link>
                 </div>
-                <Link href="/dashboard/contracts/new">
-                    <Button className="btn-gold">
-                        <Plus className="w-4 h-4 mr-2" />
-                        {t("contracts.newContract")}
-                    </Button>
-                </Link>
-            </div>
 
-            {/* Summary Cards */}
-            <div className="grid grid-cols-3 gap-4">
-                <Card className="border-none shadow-md">
-                    <CardContent className="p-4">
-                        <p className="text-xs text-gray-500 uppercase tracking-wide">{t("contracts.summary.rent") || "Monthly Rent"}</p>
-                        <p className="text-2xl font-bold text-teal-700">฿{totals.rent.toLocaleString()}</p>
-                    </CardContent>
-                </Card>
-                <Card className="border-none shadow-md">
-                    <CardContent className="p-4">
-                        <p className="text-xs text-gray-500 uppercase tracking-wide flex items-center gap-1">
-                            <Wrench className="w-3 h-3" />
-                            {t("contracts.summary.serviceFee") || "Service Fee"}
-                        </p>
-                        <p className="text-2xl font-bold text-amber-600">฿{totals.fee.toLocaleString()}</p>
-                    </CardContent>
-                </Card>
-                <Card className="border-none shadow-md bg-gradient-to-br from-gold-50 to-amber-50">
-                    <CardContent className="p-4">
-                        <p className="text-xs text-gold-600 uppercase tracking-wide">{t("contracts.summary.total") || "Total Monthly"}</p>
-                        <p className="text-2xl font-bold text-gold-600">฿{(totals.rent + totals.fee).toLocaleString()}</p>
-                    </CardContent>
-                </Card>
+                {/* Compact Stats Row */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <Card className="border-none shadow-sm bg-teal-50/50">
+                        <CardContent className="p-3 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 rounded-full bg-teal-100/80 text-teal-600">
+                                    <DollarSign className="w-4 h-4" />
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-500 uppercase font-medium">{t("contracts.summary.rent") || "Monthly Rent"}</p>
+                                    <p className="text-lg font-bold text-teal-700 leading-none mt-0.5">฿{totals.rent.toLocaleString()}</p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                    <Card className="border-none shadow-sm bg-amber-50/50">
+                        <CardContent className="p-3 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 rounded-full bg-amber-100/80 text-amber-600">
+                                    <Wrench className="w-4 h-4" />
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-500 uppercase font-medium">{t("contracts.summary.serviceFee") || "Service Fee"}</p>
+                                    <p className="text-lg font-bold text-amber-700 leading-none mt-0.5">฿{totals.fee.toLocaleString()}</p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                    <Card className="border-none shadow-sm bg-gold-50/50">
+                        <CardContent className="p-3 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 rounded-full bg-gold-100/80 text-gold-600">
+                                    <Wallet className="w-4 h-4" />
+                                </div>
+                                <div>
+                                    <p className="text-xs text-brand-gold-700 uppercase font-medium">{t("contracts.summary.total") || "Total Monthly"}</p>
+                                    <p className="text-lg font-bold text-brand-gold-700 leading-none mt-0.5">฿{(totals.rent + totals.fee).toLocaleString()}</p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
 
             {/* Contracts Table with Filters */}
@@ -446,7 +491,7 @@ export default function ContractsPage() {
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                sortedContracts.map((contract) => {
+                                paginatedContracts.map((contract) => {
                                     const { rent, fee } = calculateCurrentRent(contract);
                                     const buildingName = getBuildingName(contract);
 
@@ -507,7 +552,10 @@ export default function ContractsPage() {
                                                         </Button>
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent align="end">
-                                                        <DropdownMenuItem onClick={() => router.push(`/dashboard/contracts/${contract.id}`)}>
+                                                        <DropdownMenuItem onClick={() => {
+                                                            setSelectedContractId(contract.id);
+                                                            setViewDialogOpen(true);
+                                                        }}>
                                                             <Eye className="w-4 h-4 mr-2" />
                                                             {t("common.viewDetails") || "ดูรายละเอียด"}
                                                         </DropdownMenuItem>
@@ -539,6 +587,36 @@ export default function ContractsPage() {
                             )}
                         </TableBody>
                     </Table>
+
+                    {/* Pagination Controls */}
+                    {sortedContracts.length > 0 && (
+                        <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                            <div className="text-sm text-gray-500">
+                                {t("common.showing") || "Showing"} <span className="font-medium">{((currentPage - 1) * itemsPerPage) + 1}</span> to <span className="font-medium">{Math.min(currentPage * itemsPerPage, sortedContracts.length)}</span> of <span className="font-medium">{sortedContracts.length}</span> {t("common.entries") || "entries"}
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    disabled={currentPage === 1}
+                                >
+                                    {t("common.previous") || "Previous"}
+                                </Button>
+                                <div className="text-sm font-medium px-2">
+                                    {t("common.page") || "Page"} {currentPage} of {Math.max(1, totalPages)}
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={currentPage === totalPages || totalPages === 0}
+                                >
+                                    {t("common.next") || "Next"}
+                                </Button>
+                            </div>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
 
@@ -579,6 +657,12 @@ export default function ContractsPage() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+            {/* Contract Detail Modal */}
+            <ContractDetailModal
+                isOpen={viewDialogOpen}
+                onClose={() => setViewDialogOpen(false)}
+                contractId={selectedContractId}
+            />
         </div>
     );
 }

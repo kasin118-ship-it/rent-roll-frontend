@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useCallback, useEffect } from "react";
+import { useRouter, useParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, Check, Users, FileText, Upload, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,20 +10,30 @@ import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { ContractFormData, RentalSpace, RentPeriod, Building, Customer } from "./types";
-import { Step1Customer } from "./components/Step1Customer";
-import { Step2Terms } from "./components/Step2Terms";
-import { Step3Documents } from "./components/Step3Documents";
-import { Step4Review } from "./components/Step4Review";
+import { ContractFormData, RentalSpace, RentPeriod, Building, Customer } from "../../new/types"; // Import from new
+import { Step1Customer } from "../../new/components/Step1Customer";
+import { Step2Terms } from "../../new/components/Step2Terms";
+import { Step3Documents } from "../../new/components/Step3Documents";
+import { Step4Review } from "../../new/components/Step4Review";
 
-// Mock data
-
-
-export default function ContractWizardPage() {
+export default function EditContractPage() {
     const router = useRouter();
+    const params = useParams();
+    const id = params.id as string;
     const { t } = useLanguage();
     const [currentStep, setCurrentStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const { format } = require("date-fns");
+
+    // Fetch Contract Details
+    const { data: contract, isLoading: isLoadingContract } = useQuery({
+        queryKey: ['contract', id],
+        queryFn: async () => {
+            const res = await api.get(`/contracts/${id}`);
+            return res.data.data || res.data;
+        },
+        enabled: !!id
+    });
 
     // Fetch Buildings
     const { data: buildings = [] } = useQuery<Building[]>({
@@ -52,20 +62,64 @@ export default function ContractWizardPage() {
         contractEndDate: undefined,
         depositAmount: 0,
         notes: "",
-        rentalSpaces: [
-            {
-                id: "1",
-                buildingId: "",
-                buildingName: "",
-                floor: "",
-                areaSqm: 0,
-                rentPeriods: [
-                    { id: "1", startDate: undefined, endDate: undefined, monthlyRent: 0, serviceFee: 0 }
-                ],
-            }
-        ],
+        rentalSpaces: [],
         documents: [],
     });
+
+    // Map fetched data to formData
+    useEffect(() => {
+        if (contract) {
+            // Mapping logic here (Need to adapt based on actual API response structure)
+            // This is a simplified mapping assuming contract has typical relations
+
+            const mappedSpaces: RentalSpace[] = contract.contractUnits?.map((unit: any) => ({
+                id: unit.id || Math.random().toString(),
+                buildingId: unit.unit?.building?.id || unit.building?.id || "",
+                buildingName: unit.unit?.building?.name || unit.building?.name || "",
+                floor: unit.unit?.floor || unit.floor || "",
+                areaSqm: unit.unit?.areaSqm || unit.areaSqm || 0,
+                rentPeriods: unit.rentPeriods?.map((p: any) => ({
+                    id: p.id || Math.random().toString(),
+                    startDate: p.startDate ? new Date(p.startDate) : undefined,
+                    endDate: p.endDate ? new Date(p.endDate) : undefined,
+                    monthlyRent: Number(p.rentAmount) || 0,
+                    serviceFee: Number(p.serviceFee) || 0
+                })) || [ // Default period if missing
+                        { id: Math.random().toString(), startDate: undefined, endDate: undefined, monthlyRent: Number(unit.rentAmount) || 0, serviceFee: Number(unit.serviceFee) || 0 }
+                    ]
+            })) || [];
+
+            // If empty spaces (should not happen for valid active contract), add default
+            if (mappedSpaces.length === 0) {
+                mappedSpaces.push({
+                    id: "1",
+                    buildingId: "",
+                    buildingName: "",
+                    floor: "",
+                    areaSqm: 0,
+                    rentPeriods: [{ id: "1", startDate: undefined, endDate: undefined, monthlyRent: 0, serviceFee: 0 }]
+                });
+            }
+
+            setFormData({
+                customerId: contract.customer?.id || "",
+                customerName: contract.customer?.name || "",
+                contractNo: contract.contractNo || "",
+                contractStartDate: contract.startDate ? new Date(contract.startDate) : undefined,
+                contractEndDate: contract.endDate ? new Date(contract.endDate) : undefined,
+                depositAmount: Number(contract.depositAmount) || 0,
+                notes: contract.notes || "",
+                rentalSpaces: mappedSpaces,
+                documents: [],
+            });
+
+            // Skip to Step 2 ONLY if data is valid and mapped
+            if (contract.customer?.id && mappedSpaces.length > 0) {
+                setCurrentStep(2);
+            }
+        }
+    }, [contract]);
+
 
     const steps = [
         { id: 1, name: t("contracts.wizard.customer"), icon: Users },
@@ -74,7 +128,7 @@ export default function ContractWizardPage() {
         { id: 4, name: t("contracts.wizard.review"), icon: Eye },
     ];
 
-    // Handlers
+    // Handlers (Same as New Contract)
     const handleCustomerSelect = useCallback((customer: typeof customers[0]) => {
         setFormData(prev => ({
             ...prev,
@@ -203,7 +257,6 @@ export default function ContractWizardPage() {
 
     const handleSubmit = async () => {
         setIsSubmitting(true);
-        // ... (Logic remains same, abstracted for brevity but fully implemented below)
         try {
             // Transform data map to DTO
             const dto = {
@@ -217,7 +270,8 @@ export default function ContractWizardPage() {
                     buildingId: space.buildingId,
                     floor: space.floor,
                     areaSqm: space.areaSqm,
-                    rentPeriods: space.rentPeriods.map(p => ({ // Fixed: removed .map typo potential
+                    // Note: BE needs to handle ID matching for updates, or replace all logic
+                    rentPeriods: space.rentPeriods.map(p => ({
                         startDate: p.startDate ? format(p.startDate, 'yyyy-MM-dd') : '',
                         endDate: p.endDate ? format(p.endDate, 'yyyy-MM-dd') : '',
                         rentAmount: p.monthlyRent,
@@ -234,8 +288,8 @@ export default function ContractWizardPage() {
             });
 
             const token = localStorage.getItem('accessToken');
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/contracts`, {
-                method: 'POST',
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/contracts/${id}`, {
+                method: 'PATCH', // Update
                 headers: {
                     'Authorization': `Bearer ${token}`
                 },
@@ -244,14 +298,14 @@ export default function ContractWizardPage() {
 
             if (!res.ok) {
                 const error = await res.json();
-                throw new Error(error.message || 'Failed to create contract');
+                throw new Error(error.message || 'Failed to update contract');
             }
 
-            toast.success(t("contracts.createSuccess") || "Contract created successfully!");
+            toast.success(t("contracts.updateSuccess") || "Contract updated successfully!");
             router.push("/dashboard/contracts");
         } catch (error: any) {
             console.error(error);
-            toast.error(error.message || "Failed to create contract");
+            toast.error(error.message || "Failed to update contract");
         } finally {
             setIsSubmitting(false);
         }
@@ -262,8 +316,8 @@ export default function ContractWizardPage() {
             case 1: return formData.customerId !== "";
             case 2: {
                 const hasValidSpaces = formData.rentalSpaces.every(s =>
-                    s.buildingId && s.floor && s.areaSqm > 0 &&
-                    s.rentPeriods.length > 0 && s.rentPeriods.every(p => p.monthlyRent > 0)
+                    s.buildingId && (Number(s.areaSqm) > 0 || s.floor) && // Relaxed valid check
+                    s.rentPeriods.length > 0
                 );
                 return !!(formData.contractNo && formData.contractStartDate && formData.contractEndDate && hasValidSpaces);
             }
@@ -273,15 +327,16 @@ export default function ContractWizardPage() {
         }
     };
 
-    // Need format for submission, imported from date-fns
-    const { format } = require("date-fns");
+    if (isLoadingContract) {
+        return <div className="p-8 text-center">Loading contract data...</div>;
+    }
 
     return (
         <div className="max-w-5xl mx-auto space-y-6">
             {/* Header */}
             <div>
-                <h1 className="text-3xl font-heading font-bold text-teal-700">{t("contracts.newContract")}</h1>
-                <p className="text-gray-500 mt-1">{t("dashboard.quickActions.newContractDesc")}</p>
+                <h1 className="text-3xl font-heading font-bold text-teal-700">{t("contracts.editContract") || "Edit Contract"}</h1>
+                <p className="text-gray-500 mt-1">{t("contracts.editDesc") || "Update contract details"}</p>
             </div>
 
             {/* Steps */}
@@ -311,9 +366,9 @@ export default function ContractWizardPage() {
                         {index < steps.length - 1 && (
                             <div className={cn(
                                 "w-16 h-1 mx-4 rounded-full transition-colors",
-                                "h-1 rounded-full", // Ensure height
+                                "h-1 rounded-full",
                                 currentStep > step.id ? "bg-green-500" : "bg-gray-200"
-                            )} style={{ width: '4rem' }} /> // Force width via style if class fails
+                            )} style={{ width: '4rem' }} />
                         )}
                     </div>
                 ))}
@@ -349,11 +404,28 @@ export default function ContractWizardPage() {
                     )}
 
                     {currentStep === 3 && (
-                        <Step3Documents
-                            documents={formData.documents}
-                            onAddDocuments={handleAddDocuments}
-                            onRemoveDocument={handleRemoveDocument}
-                        />
+                        <div className="space-y-4">
+                            {/* Show existing documents if any (implied) */}
+                            {contract?.documents && contract.documents.length > 0 && (
+                                <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+                                    <h3 className="font-medium mb-2">Existing Documents</h3>
+                                    <ul className="list-disc list-inside text-sm text-gray-600">
+                                        {contract.documents.map((doc: any) => (
+                                            <li key={doc.id}>
+                                                <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-teal-600 hover:underline">
+                                                    {doc.name || "Document"}
+                                                </a>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                            <Step3Documents
+                                documents={formData.documents}
+                                onAddDocuments={handleAddDocuments}
+                                onRemoveDocument={handleRemoveDocument}
+                            />
+                        </div>
                     )}
 
                     {currentStep === 4 && (
@@ -400,7 +472,7 @@ export default function ContractWizardPage() {
                         onClick={handleSubmit}
                         disabled={isSubmitting}
                     >
-                        {isSubmitting ? "Creating..." : t("contracts.wizard.createContract")}
+                        {isSubmitting ? "Saving..." : t("common.save") || "Save Changes"}
                     </Button>
                 )}
             </div>

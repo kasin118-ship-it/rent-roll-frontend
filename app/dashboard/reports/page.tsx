@@ -150,15 +150,28 @@ export default function ReportsPage() {
         activeContracts.forEach((contract: any) => {
             contract.contractUnits?.forEach((unit: any) => {
                 // Find rent periods that overlap with the selected date range
-                unit.rentPeriods?.forEach((period: any) => {
+                const periods = unit.rentPeriods || [];
+                let hasOverlap = false;
+
+                periods.forEach((period: any) => {
                     const periodStart = new Date(period.startDate);
                     const periodEnd = new Date(period.endDate);
                     // Period overlaps with date range
                     if (periodStart <= rangeEnd && periodEnd >= rangeStart) {
-                        monthlyRent += parseFloat(period.rentAmount) || 0;
-                        monthlyServiceFee += parseFloat(period.serviceFee) || 0;
+                        const rent = (period as any).rentAmount ?? (period as any).monthlyRent ?? 0;
+                        monthlyRent += Number(rent) || 0;
+                        monthlyServiceFee += Number(period.serviceFee) || 0;
+                        hasOverlap = true;
                     }
                 });
+
+                // Fallback: If contract is active in range but no specific period overlaps (e.g. data gap), use first period
+                if (!hasOverlap && periods.length > 0) {
+                    const firstPeriod = periods[0];
+                    const rent = (firstPeriod as any).rentAmount ?? (firstPeriod as any).monthlyRent ?? 0;
+                    monthlyRent += Number(rent) || 0;
+                    monthlyServiceFee += Number(firstPeriod.serviceFee) || 0;
+                }
             });
         });
 

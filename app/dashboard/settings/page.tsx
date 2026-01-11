@@ -486,6 +486,7 @@ export default function SettingsPage() {
                                     const res = await api.post("/seed/buildings");
                                     toast.dismiss();
                                     toast.success(res.data?.message || "Buildings created!");
+                                    window.location.reload();
                                 } catch (e: any) {
                                     toast.dismiss();
                                     toast.error(e?.response?.data?.message || e.message);
@@ -504,6 +505,7 @@ export default function SettingsPage() {
                                     const res = await api.post("/seed/customers");
                                     toast.dismiss();
                                     toast.success(res.data?.message || "Customers created!");
+                                    window.location.reload();
                                 } catch (e: any) {
                                     toast.dismiss();
                                     toast.error(e?.response?.data?.message || e.message);
@@ -521,7 +523,9 @@ export default function SettingsPage() {
                                     const { api } = await import("@/lib/api");
                                     const res = await api.post("/seed/contracts");
                                     toast.dismiss();
+                                    console.log("Contracts created, reloading...");
                                     toast.success(res.data?.message || "Contracts created!");
+                                    setTimeout(() => window.location.reload(), 2000);
                                 } catch (e: any) {
                                     toast.dismiss();
                                     toast.error(e?.response?.data?.message || e.message);

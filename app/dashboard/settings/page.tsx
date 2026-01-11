@@ -45,6 +45,7 @@ export default function SettingsPage() {
     const [isImporting, setIsImporting] = useState(false);
     const [isSeeding, setIsSeeding] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const restoreInputRef = useRef<HTMLInputElement>(null);
 
     const handleLanguageChange = (value: string) => {
         setLanguage(value as "en" | "th");
@@ -52,14 +53,61 @@ export default function SettingsPage() {
     };
 
     const handleBackup = async () => {
-        toast.loading("Creating backup...");
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        toast.dismiss();
-        toast.success("Backup created successfully!");
+        toast.loading("Downloading backup...");
+        try {
+            const { api } = await import("@/lib/api");
+            const response = await api.get('/backup/download', { responseType: 'blob' });
+
+            // Trigger download
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `rent_roll_backup_${new Date().toISOString().split('T')[0]}.json`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            toast.dismiss();
+            toast.success("Backup downloaded successfully!");
+        } catch (error: any) {
+            toast.dismiss();
+            toast.error("Backup failed: " + (error?.message || "Unknown error"));
+        }
     };
 
-    const handleRestore = async () => {
-        toast.info("Select a backup file to restore");
+    const handleRestoreClick = () => {
+        restoreInputRef.current?.click();
+    };
+
+    const handleRestoreFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Reset input
+        e.target.value = '';
+
+        if (!confirm("WARNING: Restore will WIPE ALL CURRENT DATA and replace it with this backup. Are you sure?")) {
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            try {
+                const json = JSON.parse(event.target?.result as string);
+                toast.loading("Restoring system...");
+
+                const { api } = await import("@/lib/api");
+                await api.post('/backup/restore', json);
+
+                toast.dismiss();
+                toast.success("System restored successfully! reloading...");
+                setTimeout(() => window.location.reload(), 2000);
+            } catch (error: any) {
+                toast.dismiss();
+                toast.error("Restore failed: " + (error?.response?.data?.message || error.message || "Invalid file"));
+            }
+        };
+        reader.readAsText(file);
     };
 
     const handleDownloadMasterTemplate = () => {
@@ -68,6 +116,36 @@ export default function SettingsPage() {
             toast.success("Master template downloaded!");
         } catch (error) {
             toast.error("Failed to download template");
+        }
+    };
+
+    const handleConfirmImport = async (results: ImportResult[]) => {
+        if (!confirm(`Confirm import of ${results.reduce((s, r) => s + r.rowCount, 0)} rows?`)) return;
+
+        toast.loading("Importing data...");
+        try {
+            // Transform array of sheets into payload object
+            const payload: any = {};
+
+            results.forEach(sheet => {
+                const name = sheet.sheetName.toLowerCase();
+                if (name.includes("customer")) payload.customers = sheet.data;
+                else if (name.includes("building")) payload.buildings = sheet.data;
+                else if (name.includes("contract") && name.includes("master")) payload.contractMaster = sheet.data;
+                else if (name.includes("rental") || name.includes("space")) payload.rentalSpaces = sheet.data;
+                else if (name.includes("pricing") || name.includes("tier")) payload.pricingTiers = sheet.data;
+            });
+
+            const { api } = await import("@/lib/api");
+            const res = await api.post('/settings/import-data', payload);
+
+            toast.dismiss();
+            toast.success(res.data?.message || "Import completed successfully!");
+            setImportResults(null);
+            // Reload to show new data?
+        } catch (error: any) {
+            toast.dismiss();
+            toast.error("Import failed: " + (error?.response?.data?.message || error.message));
         }
     };
 
@@ -98,10 +176,11 @@ export default function SettingsPage() {
             if (hasErrors) {
                 toast.warning(`Imported ${totalRows} rows with some validation errors`);
             } else {
-                toast.success(`Successfully imported ${totalRows} rows from ${results.length} sheet(s)`);
+                toast.success(`Read ${totalRows} rows. Ready to import.`);
+                // Automatically prompt validation or button
             }
         } catch (error) {
-            toast.error("Failed to import file: " + (error as Error).message);
+            toast.error("Failed to read file: " + (error as Error).message);
         } finally {
             setIsImporting(false);
         }
@@ -109,6 +188,29 @@ export default function SettingsPage() {
 
     const handleImport = () => {
         fileInputRef.current?.click();
+    };
+
+    const handleExport = async (type: 'customers' | 'buildings' | 'contracts') => {
+        toast.loading(`Exporting ${type}...`);
+        try {
+            const { api } = await import("@/lib/api");
+            const res = await api.get('/settings/export-data'); // Fetches all for now
+            const data = res.data;
+
+            if (type === 'customers') {
+                exportCustomers(data.customers);
+            } else if (type === 'buildings') {
+                exportBuildings(data.buildings);
+            } else if (type === 'contracts') {
+                exportContractsFull(data.contracts);
+            }
+
+            toast.dismiss();
+            toast.success(`${type} exported successfully!`);
+        } catch (error: any) {
+            toast.dismiss();
+            toast.error("Export failed: " + (error?.message || "Unknown error"));
+        }
     };
 
     const handleDrop = (e: React.DragEvent) => {
@@ -120,6 +222,8 @@ export default function SettingsPage() {
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault();
     };
+    // ... existing reset logic ...
+
 
     const handleFactoryReset = async () => {
         if (resetConfirmation !== "RESET") {
@@ -223,7 +327,7 @@ export default function SettingsPage() {
                             <Download className="w-6 h-6" />
                             <span>{t("settings.createBackup")}</span>
                         </Button>
-                        <Button onClick={handleRestore} variant="outline" className="h-auto py-4 flex-col gap-2">
+                        <Button onClick={handleRestoreClick} variant="outline" className="h-auto py-4 flex-col gap-2">
                             <Upload className="w-6 h-6" />
                             <span>{t("settings.restoreBackup")}</span>
                         </Button>
@@ -277,24 +381,15 @@ export default function SettingsPage() {
                         <Label className="text-sm text-gray-500 mb-2 block">{t("settings.exportSystemData")}</Label>
                         <p className="text-xs text-gray-400 mb-2">{t("settings.exportDataDesc")}</p>
                         <div className="flex flex-wrap gap-2">
-                            <Button variant="outline" size="sm" onClick={() => {
-                                exportCustomers();
-                                toast.success("ส่งออกข้อมูลลูกค้าเรียบร้อย!");
-                            }}>
+                            <Button variant="outline" size="sm" onClick={() => handleExport('customers')}>
                                 <FileSpreadsheet className="w-4 h-4 mr-2 text-teal-600" />
                                 Export Customers
                             </Button>
-                            <Button variant="outline" size="sm" onClick={() => {
-                                exportBuildings();
-                                toast.success("ส่งออกข้อมูลอาคารเรียบร้อย!");
-                            }}>
+                            <Button variant="outline" size="sm" onClick={() => handleExport('buildings')}>
                                 <FileSpreadsheet className="w-4 h-4 mr-2 text-teal-600" />
                                 Export Buildings
                             </Button>
-                            <Button variant="outline" size="sm" onClick={() => {
-                                exportContractsFull();
-                                toast.success("ส่งออกข้อมูลสัญญา (พร้อมพื้นที่และราคา) เรียบร้อย!");
-                            }}>
+                            <Button variant="outline" size="sm" onClick={() => handleExport('contracts')}>
                                 <FileSpreadsheet className="w-4 h-4 mr-2 text-gold-600" />
                                 Export Contracts (Full)
                             </Button>
@@ -314,6 +409,14 @@ export default function SettingsPage() {
                                 e.target.value = "";
                             }}
                         />
+                        {/* Hidden Input for Backup Restore */}
+                        <input
+                            ref={restoreInputRef}
+                            type="file"
+                            accept=".json"
+                            className="hidden"
+                            onChange={handleRestoreFileSelect}
+                        />
                         <div
                             className="border-2 border-dashed border-gray-200 rounded-lg p-6 text-center hover:border-teal-300 hover:bg-teal-50/30 transition-colors cursor-pointer"
                             onDrop={handleDrop}
@@ -323,13 +426,13 @@ export default function SettingsPage() {
                             {isImporting ? (
                                 <>
                                     <div className="w-8 h-8 mx-auto mb-2 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
-                                    <p className="text-sm text-teal-600">กำลังนำเข้าข้อมูล...</p>
+                                    <p className="text-sm text-teal-600">Reading file...</p>
                                 </>
                             ) : (
                                 <>
                                     <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
                                     <p className="text-sm text-gray-500 mb-2">{t("settings.dragDrop")}</p>
-                                    <p className="text-xs text-gray-400 mb-3">รองรับ: Customers, Buildings, Units, Contract Master, Rental Spaces, Pricing Tiers</p>
+                                    <p className="text-xs text-gray-400 mb-3">Supports: Customers, Buildings, Contract Master, Rental Spaces, Pricing Tiers</p>
                                     <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); handleImport(); }}>
                                         {t("settings.browseFiles")}
                                     </Button>
@@ -340,7 +443,19 @@ export default function SettingsPage() {
                         {/* Import Results */}
                         {importResults && (
                             <div className="mt-4 space-y-2">
-                                <Label className="text-sm font-medium">ผลการนำเข้า:</Label>
+                                <div className="flex items-center justify-between mb-2">
+                                    <Label className="text-sm font-medium">Import Preview:</Label>
+                                    <Button
+                                        size="sm"
+                                        className="bg-green-600 hover:bg-green-700 text-white"
+                                        disabled={importResults.some(r => r.errors.length > 0)}
+                                        onClick={() => handleConfirmImport(importResults)}
+                                    >
+                                        <CheckCircle className="w-4 h-4 mr-2" />
+                                        Confirm Import
+                                    </Button>
+                                </div>
+
                                 {importResults.map((result, idx) => (
                                     <div key={idx} className={`p-3 rounded-lg text-sm ${result.success ? "bg-green-50 border border-green-200" : "bg-red-50 border border-red-200"}`}>
                                         <div className="flex items-center gap-2">
@@ -350,7 +465,7 @@ export default function SettingsPage() {
                                                 <XCircle className="w-4 h-4 text-red-600" />
                                             )}
                                             <span className="font-medium">{result.sheetName}</span>
-                                            <span className="text-gray-500">({result.rowCount} แถว)</span>
+                                            <span className="text-gray-500">({result.rowCount} rows)</span>
                                         </div>
                                         {result.errors.length > 0 && (
                                             <ul className="mt-2 text-xs text-red-600 list-disc ml-6">
@@ -358,7 +473,7 @@ export default function SettingsPage() {
                                                     <li key={i}>{err}</li>
                                                 ))}
                                                 {result.errors.length > 3 && (
-                                                    <li>...และอีก {result.errors.length - 3} errors</li>
+                                                    <li>...and {result.errors.length - 3} move errors</li>
                                                 )}
                                             </ul>
                                         )}

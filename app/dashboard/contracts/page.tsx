@@ -102,7 +102,6 @@ export default function ContractsPage() {
         // TypeORM returns using entity property name 'building', not query alias
         if (firstUnit?.building?.name) return firstUnit.building.name;
         if (firstUnit?.directBuilding?.name) return firstUnit.directBuilding.name;
-        if (firstUnit?.unit?.building?.name) return firstUnit.unit.building.name;
         return "-";
     };
 
@@ -525,7 +524,7 @@ export default function ContractsPage() {
                                             <TableCell>
                                                 <div className="flex flex-wrap gap-1">
                                                     {contract.contractUnits?.map((unit: any, i: number) => {
-                                                        const label = unit.unit?.code || (unit.directBuilding?.name ? `${unit.directBuilding.code || 'B'} ${unit.floor}F` : `Fl.${unit.floor}`);
+                                                        const label = unit.directBuilding?.name ? `${unit.directBuilding.code || 'B'} ${unit.floor}F` : `Fl.${unit.floor}`;
                                                         return (
                                                             <Badge key={i} variant="outline" className="text-xs">
                                                                 {label}

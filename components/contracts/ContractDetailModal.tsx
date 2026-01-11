@@ -170,8 +170,8 @@ export function ContractDetailModal({ isOpen, onClose, contractId }: ContractDet
                                 </h3>
                                 <div className="space-y-3">
                                     {contract.contractUnits?.map((unit: any, index: number) => {
-                                        const buildingName = unit.unit?.building?.name || unit.directBuilding?.name || "-";
-                                        const unitCode = unit.unit?.code || `Floor ${unit.floor}`;
+                                        const buildingName = unit.directBuilding?.name || "-";
+                                        const unitCode = `${unit.floor}F`;
 
                                         return (
                                             <div key={index} className="border rounded-md overflow-hidden">

@@ -183,30 +183,42 @@ export default function ReportsPage() {
         };
     }, [contracts, dateRange, selectedBuildingIds]);
 
-    // Calculate occupancy from buildings data, filtered by selection
+    // 3. Fetch Occupancy Report from Backend (Server-side date logic)
+    const { data: occupancyReport, isLoading: isLoadingOccupancy } = useQuery({
+        queryKey: ['occupancyReport', dateRange?.to?.toISOString(), selectedBuildingIds],
+        queryFn: async () => {
+            const endDate = dateRange?.to ? dateRange.to.toISOString().split('T')[0] : undefined;
+            const res = await api.get("/reports/occupancy", { params: { endDate } });
+            return res.data?.data || res.data;
+        },
+        enabled: !!dateRange?.to,
+    });
+
     const occupancyStats = useMemo(() => {
-        // If no building filter, use all buildings
+        if (!occupancyReport || !occupancyReport.byBuilding) return { rate: 0, occupied: 0, vacant: 0, total: 0 };
+
+        // If specific buildings are selected, filter the server response
         const filteredBuildings = selectedBuildingIds.length > 0
-            ? buildings.filter((b: any) => selectedBuildingIds.includes(b.id))
-            : buildings;
+            ? occupancyReport.byBuilding.filter((b: any) => selectedBuildingIds.includes(b.buildingId))
+            : occupancyReport.byBuilding;
 
         let totalArea = 0;
-        let rentedArea = 0;
+        let occupiedArea = 0;
 
-        filteredBuildings.forEach((b: any) => {
-            totalArea += Number(b.rentableArea) || 0;
-            rentedArea += Number(b.rentedArea) || 0;
+        filteredBuildings?.forEach((b: any) => {
+            totalArea += Number(b.total) || 0;
+            occupiedArea += Number(b.occupied) || 0;
         });
 
-        const rate = totalArea > 0 ? Math.round((rentedArea / totalArea) * 100) : 0;
+        const rate = totalArea > 0 ? Math.round((occupiedArea / totalArea) * 100) : 0;
 
         return {
             rate,
-            occupied: rentedArea,
-            vacant: totalArea - rentedArea,
+            occupied: occupiedArea,
+            vacant: totalArea - occupiedArea,
             total: totalArea,
         };
-    }, [buildings, selectedBuildingIds]);
+    }, [occupancyReport, selectedBuildingIds]);
 
     const expiringContracts = useMemo(() => {
         if (!dateRange?.from || !dateRange?.to) {
@@ -277,8 +289,8 @@ export default function ReportsPage() {
 
     // Pie chart data
     const revenueByType = [
-        { name: "Rent", value: revenueStats.monthlyRent, color: "#0d9488" },
-        { name: "Service Fee", value: revenueStats.monthlyServiceFee, color: "#f59e0b" },
+        { name: t("reports.revenue.totalRent"), value: revenueStats.monthlyRent, color: "#0d9488" },
+        { name: t("reports.revenue.serviceFee"), value: revenueStats.monthlyServiceFee, color: "#f59e0b" },
     ];
 
     return (
@@ -300,7 +312,7 @@ export default function ReportsPage() {
                 <CardContent className="p-4">
                     <div className="flex flex-col md:flex-row md:items-center gap-4">
                         <div className="flex items-center gap-3">
-                            <label className="text-sm font-medium text-gray-700">เลือกปี:</label>
+                            <label className="text-sm font-medium text-gray-700">{t("reports.filter.selectYear")}</label>
                             <div className="flex gap-2">
                                 <Button
                                     variant={selectedYear === currentYear ? "default" : "outline"}
@@ -308,7 +320,7 @@ export default function ReportsPage() {
                                     className={selectedYear === currentYear ? "bg-teal-600 hover:bg-teal-700" : ""}
                                     onClick={() => handleYearChange(currentYear)}
                                 >
-                                    ปีนี้ ({currentYear})
+                                    {t("reports.filter.thisYear")} ({currentYear})
                                 </Button>
                                 <Button
                                     variant={selectedYear === currentYear - 1 ? "default" : "outline"}
@@ -316,7 +328,7 @@ export default function ReportsPage() {
                                     className={selectedYear === currentYear - 1 ? "bg-teal-600 hover:bg-teal-700" : ""}
                                     onClick={() => handleYearChange(currentYear - 1)}
                                 >
-                                    ปีที่แล้ว ({currentYear - 1})
+                                    {t("reports.filter.lastYear")} ({currentYear - 1})
                                 </Button>
                                 <Button
                                     variant={selectedYear === currentYear - 2 ? "default" : "outline"}
@@ -329,7 +341,7 @@ export default function ReportsPage() {
                             </div>
                         </div>
                         <div className="border-l border-gray-200 pl-4 flex items-center gap-3">
-                            <label className="text-sm font-medium text-gray-700">หรือเลือกช่วง:</label>
+                            <label className="text-sm font-medium text-gray-700">{t("reports.filter.orSelectRange")}</label>
                             <DatePickerWithRange
                                 className="w-[280px]"
                                 dateRange={dateRange}
@@ -337,14 +349,14 @@ export default function ReportsPage() {
                             />
                         </div>
                         <div className="border-l border-gray-200 pl-4 flex items-center gap-3">
-                            <label className="text-sm font-medium text-gray-700">อาคาร:</label>
+                            <label className="text-sm font-medium text-gray-700">{t("reports.filter.building")}</label>
                             <Popover>
                                 <PopoverTrigger asChild>
                                     <Button variant="outline" className="min-w-[200px] justify-between">
                                         <span>
                                             {selectedBuildingIds.length === 0
-                                                ? "ทั้งหมด"
-                                                : `เลือก ${selectedBuildingIds.length} อาคาร`}
+                                                ? t("reports.filter.all")
+                                                : `${t("reports.filter.selected")} ${selectedBuildingIds.length} ${t("reports.filter.buildings")}`}
                                         </span>
                                         <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -378,7 +390,7 @@ export default function ReportsPage() {
                                                 onClick={() => setSelectedBuildingIds([])}
                                                 className="w-full px-3 py-2 text-sm text-gray-500 hover:text-gray-700 border-t text-left hover:bg-gray-50"
                                             >
-                                                ล้างตัวกรอง
+                                                {t("reports.filter.clearFilter")}
                                             </button>
                                         )}
                                     </div>
@@ -479,20 +491,20 @@ export default function ReportsPage() {
                             <CardContent>
                                 <div className="space-y-4">
                                     <div className="flex justify-between items-center p-3 bg-teal-50 rounded-lg">
-                                        <span className="text-teal-700 font-medium">ค่าเช่ารายเดือน</span>
+                                        <span className="text-teal-700 font-medium">{t("reports.revenue.totalRent")}</span>
                                         <span className="text-teal-700 font-bold">฿{revenueStats.monthlyRent.toLocaleString()}</span>
                                     </div>
                                     <div className="flex justify-between items-center p-3 bg-amber-50 rounded-lg">
-                                        <span className="text-amber-700 font-medium">ค่าบริการรายเดือน</span>
+                                        <span className="text-amber-700 font-medium">{t("reports.revenue.serviceFee")}</span>
                                         <span className="text-amber-700 font-bold">฿{revenueStats.monthlyServiceFee.toLocaleString()}</span>
                                     </div>
                                     <div className="flex justify-between items-center p-3 bg-gold-50 rounded-lg">
-                                        <span className="text-gold-700 font-medium">รวมรายรับรายเดือน</span>
+                                        <span className="text-gold-700 font-medium">{t("reports.revenue.total")}</span>
                                         <span className="text-gold-700 font-bold">฿{revenueStats.totalMonthly.toLocaleString()}</span>
                                     </div>
                                     <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                        <span className="text-gray-700 font-medium">สัญญาที่ใช้งานอยู่</span>
-                                        <span className="text-gray-700 font-bold">{revenueStats.activeContracts} ฉบับ</span>
+                                        <span className="text-gray-700 font-medium">{t("reports.revenue.activeContracts")}</span>
+                                        <span className="text-gray-700 font-bold">{revenueStats.activeContracts} {t("common.contracts")}</span>
                                     </div>
                                 </div>
                             </CardContent>

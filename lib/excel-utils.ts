@@ -139,10 +139,11 @@ const mockContracts = [
 // EXPORT DATA FUNCTIONS
 // =============================================================================
 
-export function exportCustomers() {
+export function exportCustomers(realCustomers?: any[]) {
+    const customersToExport = realCustomers || mockCustomers;
     const wb = XLSX.utils.book_new();
     const headers = ["customer_id", "name", "type", "tax_id", "phone", "email", "address", "contact_name", "contact_phone"];
-    const data = mockCustomers.map(c => [c.id, c.name, c.type, c.taxId, c.phone, c.email, c.address, c.contactName, c.contactPhone]);
+    const data = customersToExport.map((c: any) => [c.id, c.name, c.type, c.taxId, c.phone, c.email, c.address, c.contactName, c.contactPhone]);
 
     const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
     ws["!cols"] = headers.map(h => ({ wch: Math.max(h.length + 5, 15) }));
@@ -154,10 +155,11 @@ export function exportCustomers() {
     saveAs(blob, `customers_export_${new Date().toISOString().split("T")[0]}.xlsx`);
 }
 
-export function exportBuildings() {
+export function exportBuildings(realBuildings?: any[]) {
+    const buildingsToExport = realBuildings || mockBuildings;
     const wb = XLSX.utils.book_new();
     const headers = ["building_id", "name", "address", "total_floors", "total_area_sqm", "status"];
-    const data = mockBuildings.map(b => [b.id, b.name, b.address, b.totalFloors, b.totalAreaSqm, b.status]);
+    const data = buildingsToExport.map((b: any) => [b.id, b.name, b.address, b.totalFloors, b.rentableArea || b.totalAreaSqm, b.status || 'active']);
 
     const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
     ws["!cols"] = headers.map(h => ({ wch: Math.max(h.length + 5, 15) }));
@@ -191,12 +193,14 @@ export function downloadMasterTemplate() {
 }
 
 
-export function exportContractsFull() {
+export function exportContractsFull(realContracts?: any[]) {
+    const contractsToExport = realContracts || mockContracts;
+
     const wb = XLSX.utils.book_new();
 
     // Sheet 1: Contract Master
     const masterHeaders = ["contract_no", "customer_id", "start_date", "end_date", "deposit_amount", "status", "notes"];
-    const masterData = mockContracts.map(c => [c.contractNo, c.customerId, c.startDate, c.endDate, c.depositAmount, c.status, c.notes]);
+    const masterData = contractsToExport.map((c: any) => [c.contractNo, c.customerId, c.startDate, c.endDate, c.depositAmount, c.status, c.notes]);
     const wsMaster = XLSX.utils.aoa_to_sheet([masterHeaders, ...masterData]);
     wsMaster["!cols"] = masterHeaders.map(h => ({ wch: Math.max(h.length + 5, 15) }));
     XLSX.utils.book_append_sheet(wb, wsMaster, "Contract Master");
@@ -204,8 +208,8 @@ export function exportContractsFull() {
     // Sheet 2: Rental Spaces
     const spacesHeaders = ["contract_no", "building_id", "floor", "area_sqm"];
     const spacesData: (string | number)[][] = [];
-    mockContracts.forEach(c => {
-        c.rentalSpaces.forEach(s => {
+    contractsToExport.forEach((c: any) => {
+        c.rentalSpaces.forEach((s: any) => {
             spacesData.push([c.contractNo, s.buildingId, s.floor, s.areaSqm]);
         });
     });
@@ -216,8 +220,8 @@ export function exportContractsFull() {
     // Sheet 3: Pricing Tiers
     const tiersHeaders = ["contract_no", "floor", "tier_order", "start_date", "end_date", "rent_amount", "service_fee"];
     const tiersData: (string | number)[][] = [];
-    mockContracts.forEach(c => {
-        c.pricingTiers.forEach(t => {
+    contractsToExport.forEach((c: any) => {
+        c.pricingTiers.forEach((t: any) => {
             tiersData.push([c.contractNo, t.floor, t.tierOrder, t.startDate, t.endDate, t.rentAmount, t.serviceFee]);
         });
     });

@@ -59,8 +59,8 @@ export default function AlertsPage() {
                 in30++;
                 alertsList.push({
                     id: contract.id,
-                    title: "Contract Expiring Soon",
-                    message: `Contract #${contract.contractNo} for ${contract.customer?.name || "Unknown"} expires in ${Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))} days.`,
+                    title: t("alerts.contractExpiringSoon"),
+                    message: t("dashboard.alerts.expiresIn").replace("{contractNo}", contract.contractNo).replace("{days}", String(Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)))),
                     type: "warning",
                     timestamp: new Date().toISOString(),
                     read: false,
@@ -70,8 +70,8 @@ export default function AlertsPage() {
                 in60++;
                 alertsList.push({
                     id: contract.id,
-                    title: "Contract Expiring",
-                    message: `Contract #${contract.contractNo} for ${contract.customer?.name || "Unknown"} expires in ${Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))} days.`,
+                    title: t("alerts.contractExpiring"),
+                    message: t("dashboard.alerts.expiresIn").replace("{contractNo}", contract.contractNo).replace("{days}", String(Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)))),
                     type: "info",
                     timestamp: new Date().toISOString(),
                     read: false,

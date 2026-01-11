@@ -251,7 +251,7 @@ export default function BuildingsPage() {
                                         <span>{building.totalFloors} {t("buildings.floors")}</span>
                                     </div>
                                     <div>
-                                        <span className="text-gray-500">{Number(building.rentableArea).toLocaleString()} ตร.ม.</span>
+                                        <span className="text-gray-500">{Number(building.rentableArea).toLocaleString()} {t("common.sqm")}</span>
                                     </div>
                                 </div>
 
@@ -268,8 +268,8 @@ export default function BuildingsPage() {
                                         />
                                     </div>
                                     <div className="flex justify-between text-xs text-gray-400 mt-1">
-                                        <span>{rentedArea.toLocaleString()} ตร.ม. เช่าแล้ว</span>
-                                        <span>{vacantArea.toLocaleString()} ตร.ม. ว่าง</span>
+                                        <span>{rentedArea.toLocaleString()} {t("common.sqm")} {t("common.rented")}</span>
+                                        <span>{vacantArea.toLocaleString()} {t("common.sqm")} {t("common.available")}</span>
                                     </div>
                                 </div>
 
@@ -277,7 +277,7 @@ export default function BuildingsPage() {
                                 <div className="flex gap-2">
                                     <Button variant="outline" className="flex-1" onClick={() => handleViewDetails(building)}>
                                         <Eye className="w-4 h-4 mr-2" />
-                                        ดูรายละเอียด
+                                        {t("common.viewDetails")}
                                     </Button>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
@@ -347,16 +347,7 @@ export default function BuildingsPage() {
                                     <p className="font-medium">{selectedBuilding.ownerCompany}</p>
                                 </div>
                             )}
-                            <div className="grid grid-cols-2 gap-4 pt-2 border-t">
-                                <div>
-                                    <Label className="text-gray-500">จำนวนยูนิต</Label>
-                                    <p className="font-medium">{selectedBuilding.units?.length || 0} ยูนิต</p>
-                                </div>
-                                <div>
-                                    <Label className="text-gray-500">มีผู้เช่า</Label>
-                                    <p className="font-medium">{selectedBuilding.units?.filter((u: any) => u.status === 'occupied').length || 0} ยูนิต</p>
-                                </div>
-                            </div>
+
                         </div>
                     )}
                     <DialogFooter>

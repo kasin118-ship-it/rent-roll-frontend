@@ -140,13 +140,13 @@ export default function DashboardPage() {
                 monthlyServiceFee,
                 totalMonthly: monthlyRent + monthlyServiceFee,
                 occupiedArea: Math.round(occupiedArea),
-                totalArea: buildingStats.totalUnits || 0,
+                totalArea: buildingStats.totalArea || 0,
             },
             alerts: expiringContracts.slice(0, 3).map((c: Contract) => {
                 const daysLeft = Math.ceil((new Date(c.endDate).getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
                 return {
                     id: c.id,
-                    message: `Contract #${c.contractNo} expires in ${daysLeft} days`,
+                    message: t("dashboard.alerts.expiresIn").replace("{contractNo}", c.contractNo).replace("{days}", String(daysLeft)),
                     type: daysLeft <= 30 ? "warning" : "info",
                 } as Alert;
             })

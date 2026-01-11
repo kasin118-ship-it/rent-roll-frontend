@@ -9,7 +9,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
-import { Trash2 } from "lucide-react";
+
 import { RentPeriod } from "./contracts/new/types";
 
 interface ContractUnit {
@@ -153,20 +153,7 @@ export default function DashboardPage() {
         };
     }, [contracts, buildingStats, customers, isLoading]);
 
-    const handleReset = async () => {
-        if (!confirm(t("dashboard.resetConfirm"))) return;
 
-        try {
-            toast.loading(t("settings.resetting"));
-            await api.post("/seed/reset");
-            localStorage.clear();
-            toast.success(t("dashboard.resetSuccess"));
-            router.push("/login");
-        } catch (error) {
-            console.error(error);
-            toast.error("Reset failed");
-        }
-    };
 
     if (isLoading) {
         return (
@@ -330,16 +317,7 @@ export default function DashboardPage() {
                 </Link>
             </div>
 
-            {/* Danger Zone: Reset Button */}
-            <div className="flex justify-end pt-8 border-t mt-8">
-                <button
-                    onClick={handleReset}
-                    className="flex items-center gap-2 text-red-500 hover:text-red-700 hover:bg-red-50 px-4 py-2 rounded-lg transition-colors border border-red-200"
-                >
-                    <Trash2 className="w-4 h-4" />
-                    {t("dashboard.resetData")}
-                </button>
-            </div>
+
         </div>
     );
 }

@@ -79,6 +79,15 @@ export default function AlertsPage() {
                 });
             } else if (endDate <= days90 && endDate > days60) {
                 in90++;
+                alertsList.push({
+                    id: contract.id,
+                    title: t("alerts.contractExpiring"),
+                    message: t("dashboard.alerts.expiresIn").replace("{contractNo}", contract.contractNo).replace("{days}", String(Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)))),
+                    type: "info",
+                    timestamp: new Date().toISOString(),
+                    read: false,
+                    contractNo: contract.contractNo,
+                });
             }
         });
 

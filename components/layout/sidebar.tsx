@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
     Home,
     Building2,
@@ -39,6 +39,19 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         { name: t("sidebar.settings"), href: "/dashboard/settings", icon: Settings },
         { name: t("sidebar.auditLog"), href: "/dashboard/audit", icon: Shield },
     ];
+
+    const router = useRouter();
+
+    const handleLogout = () => {
+        // Clear tokens
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        // Check for role-based token if exists (optional but good practice)
+        localStorage.removeItem('userRole');
+
+        // Redirect to login
+        router.push('/login');
+    };
 
     return (
         <div className="flex flex-col h-full sidebar text-white">
@@ -95,7 +108,12 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                         <p className="text-sm font-medium text-white truncate">Admin</p>
                         <p className="text-xs text-white/50 truncate">admin@kingbridge.com</p>
                     </div>
-                    <Button variant="ghost" size="icon" className="text-white/70 hover:text-white">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-white/70 hover:text-white"
+                        onClick={handleLogout}
+                    >
                         <LogOut className="w-4 h-4" />
                     </Button>
                 </div>

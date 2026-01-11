@@ -105,14 +105,23 @@ export default function DashboardPage() {
             contract.contractUnits?.forEach((unit: ContractUnit) => {
                 occupiedArea += parseFloat(unit.areaSqm.toString()) || 0;
                 // Find current rent period
-                const currentPeriod = unit.rentPeriods?.find((period: RentPeriod) => {
+                // Find current rent period
+                const periods = unit.rentPeriods || [];
+                let currentPeriod = periods.find((period: any) => {
                     const start = period.startDate ? new Date(period.startDate) : new Date(0);
                     const end = period.endDate ? new Date(period.endDate) : new Date(8640000000000000); // Far future
                     return today >= start && today <= end;
                 });
 
+                // Fallback to first period if no specific period matches (e.g. slight date mismatch or future start)
+                if (!currentPeriod && periods.length > 0) {
+                    currentPeriod = periods[0];
+                }
+
                 if (currentPeriod) {
-                    monthlyRent += Number(currentPeriod.monthlyRent) || 0;
+                    // Backend returns 'rentAmount', Type interface has 'monthlyRent'
+                    const rent = (currentPeriod as any).rentAmount ?? (currentPeriod as any).monthlyRent ?? 0;
+                    monthlyRent += Number(rent) || 0;
                     monthlyServiceFee += Number(currentPeriod.serviceFee) || 0;
                 }
             });

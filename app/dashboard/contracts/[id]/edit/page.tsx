@@ -17,9 +17,6 @@ import { Step2Terms } from "../../new/components/Step2Terms";
 import { Step3Documents } from "../../new/components/Step3Documents";
 import { Step4Review } from "../../new/components/Step4Review";
 
-export function generateStaticParams() {
-    return [];
-}
 
 export default function EditContractPage() {
     const router = useRouter();

@@ -3,15 +3,14 @@ import type { NextConfig } from "next";
 const isProd = process.env.NODE_ENV === 'production';
 
 const nextConfig: NextConfig = {
-  output: "export",
-  basePath: isProd ? "/rent-roll-frontend" : "",
-  assetPrefix: isProd ? "/rent-roll-frontend/" : "",
-  trailingSlash: true,
+  // output: "export", // Reverted for Netlify (Allows dynamic routes)
+  // basePath: "/rent-roll-frontend", // Reverted
+  // assetPrefix: "/rent-roll-frontend/", // Reverted
   images: {
     unoptimized: true,
   },
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: true, // Keeping this to unblock build
   },
 };
 

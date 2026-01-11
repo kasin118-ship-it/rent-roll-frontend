@@ -1,0 +1,71 @@
+
+> frontend@0.1.0 build
+> next build
+
+▲ Next.js 16.1.1 (Turbopack)
+- Environments: .env.production
+
+  Creating an optimized production build ...
+
+> Build error occurred
+Error: Turbopack build failed with 2 errors:
+./app/dashboard/contracts/[id]/edit/page.tsx:5:8
+Next.js can't recognize the exported `generateStaticParams` field in route. App pages cannot use both "use client" and export function "generateStaticParams()".
+[0m [90m  3 |[39m [36mimport[39m { useState[33m,[39m useCallback[33m,[39m useEffect } [36mfrom[39m [32m"react"[39m[33m;[39m
+ [90m  4 |[39m
+[31m[1m>[22m[39m[90m  5 |[39m [36mexport[39m [36mfunction[39m generateStaticParams() {
+ [90m    |[39m        [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m  6 |[39m     [36mreturn[39m [][33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m  7 |[39m }
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m  8 |[39m [36mimport[39m { useRouter[33m,[39m useParams } [36mfrom[39m [32m"next/navigation"[39m[33m;[39m
+ [90m  9 |[39m [36mimport[39m { [33mChevronLeft[39m[33m,[39m [33mChevronRight[39m[33m,[39m [33mCheck[39m[33m,[39m [33mUsers[39m[33m,[39m [33mFileText[39m[33m,[39m [33mUpload[39m[33m,[39m [33mEye[39m } [36mfrom[39m [32m"lucide-react"[39m[33m;[39m
+ [90m 10 |[39m [36mimport[39m { [33mButton[39m } [36mfrom[39m [32m"@/components/ui/button"[39m[33m;[39m[0m
+
+The exported configuration object in a source file needs to have a very specific format from which some properties can be statically parsed at compiled-time.
+
+Import traces:
+  Client Component Browser:
+    ./app/dashboard/contracts/[id]/edit/page.tsx [Client Component Browser]
+    ./app/dashboard/contracts/[id]/edit/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/dashboard/contracts/[id]/edit/page.tsx [Client Component SSR]
+    ./app/dashboard/contracts/[id]/edit/page.tsx [Server Component]
+
+https://nextjs.org/docs/app/api-reference/file-conventions/route-segment-config
+
+
+./app/dashboard/contracts/[id]/renew/page.tsx:5:8
+Next.js can't recognize the exported `generateStaticParams` field in route. App pages cannot use both "use client" and export function "generateStaticParams()".
+[0m [90m  3 |[39m [36mimport[39m { useState[33m,[39m useCallback[33m,[39m useEffect } [36mfrom[39m [32m"react"[39m[33m;[39m
+ [90m  4 |[39m
+[31m[1m>[22m[39m[90m  5 |[39m [36mexport[39m [36mfunction[39m generateStaticParams() {
+ [90m    |[39m        [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m  6 |[39m     [36mreturn[39m [][33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m  7 |[39m }
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m  8 |[39m [36mimport[39m { useRouter[33m,[39m useParams } [36mfrom[39m [32m"next/navigation"[39m[33m;[39m
+ [90m  9 |[39m [36mimport[39m { [33mChevronLeft[39m[33m,[39m [33mChevronRight[39m[33m,[39m [33mCheck[39m[33m,[39m [33mUsers[39m[33m,[39m [33mFileText[39m[33m,[39m [33mUpload[39m[33m,[39m [33mEye[39m } [36mfrom[39m [32m"lucide-react"[39m[33m;[39m
+ [90m 10 |[39m [36mimport[39m { [33mButton[39m } [36mfrom[39m [32m"@/components/ui/button"[39m[33m;[39m[0m
+
+The exported configuration object in a source file needs to have a very specific format from which some properties can be statically parsed at compiled-time.
+
+Import traces:
+  Client Component Browser:
+    ./app/dashboard/contracts/[id]/renew/page.tsx [Client Component Browser]
+    ./app/dashboard/contracts/[id]/renew/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/dashboard/contracts/[id]/renew/page.tsx [Client Component SSR]
+    ./app/dashboard/contracts/[id]/renew/page.tsx [Server Component]
+
+https://nextjs.org/docs/app/api-reference/file-conventions/route-segment-config
+
+
+    at <unknown> (./app/dashboard/contracts/[id]/edit/page.tsx:5:8)
+    at <unknown> (https://nextjs.org/docs/app/api-reference/file-conventions/route-segment-config)
+    at <unknown> (./app/dashboard/contracts/[id]/renew/page.tsx:5:8)
+    at <unknown> (https://nextjs.org/docs/app/api-reference/file-conventions/route-segment-config)

@@ -1,0 +1,71 @@
+
+> frontend@0.1.0 build
+> next build
+
+▲ Next.js 16.1.1 (Turbopack)
+- Environments: .env.production
+
+  Creating an optimized production build ...
+
+> Build error occurred
+Error: Turbopack build failed with 2 errors:
+./app/dashboard/contracts/[id]/edit/page.tsx:20:8
+Next.js can't recognize the exported `generateStaticParams` field in route. App pages cannot use both "use client" and export function "generateStaticParams()".
+[0m [90m 18 |[39m [36mimport[39m { [33mStep4Review[39m } [36mfrom[39m [32m"../../new/components/Step4Review"[39m[33m;[39m
+ [90m 19 |[39m
+[31m[1m>[22m[39m[90m 20 |[39m [36mexport[39m [36mfunction[39m generateStaticParams() {
+ [90m    |[39m        [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m 21 |[39m     [36mreturn[39m [][33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m 22 |[39m }
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 23 |[39m
+ [90m 24 |[39m [36mexport[39m [36mdefault[39m [36mfunction[39m [33mEditContractPage[39m() {
+ [90m 25 |[39m     [36mconst[39m router [33m=[39m useRouter()[33m;[39m[0m
+
+The exported configuration object in a source file needs to have a very specific format from which some properties can be statically parsed at compiled-time.
+
+Import traces:
+  Client Component Browser:
+    ./app/dashboard/contracts/[id]/edit/page.tsx [Client Component Browser]
+    ./app/dashboard/contracts/[id]/edit/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/dashboard/contracts/[id]/edit/page.tsx [Client Component SSR]
+    ./app/dashboard/contracts/[id]/edit/page.tsx [Server Component]
+
+https://nextjs.org/docs/app/api-reference/file-conventions/route-segment-config
+
+
+./app/dashboard/contracts/[id]/renew/page.tsx:21:8
+Next.js can't recognize the exported `generateStaticParams` field in route. App pages cannot use both "use client" and export function "generateStaticParams()".
+[0m [90m 19 |[39m [36mimport[39m { addDays[33m,[39m addYears[33m,[39m format } [36mfrom[39m [32m"date-fns"[39m[33m;[39m
+ [90m 20 |[39m
+[31m[1m>[22m[39m[90m 21 |[39m [36mexport[39m [36mfunction[39m generateStaticParams() {
+ [90m    |[39m        [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m 22 |[39m     [36mreturn[39m [][33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m 23 |[39m }
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 24 |[39m
+ [90m 25 |[39m [36mexport[39m [36mdefault[39m [36mfunction[39m [33mRenewContractPage[39m() {
+ [90m 26 |[39m     [36mconst[39m router [33m=[39m useRouter()[33m;[39m[0m
+
+The exported configuration object in a source file needs to have a very specific format from which some properties can be statically parsed at compiled-time.
+
+Import traces:
+  Client Component Browser:
+    ./app/dashboard/contracts/[id]/renew/page.tsx [Client Component Browser]
+    ./app/dashboard/contracts/[id]/renew/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/dashboard/contracts/[id]/renew/page.tsx [Client Component SSR]
+    ./app/dashboard/contracts/[id]/renew/page.tsx [Server Component]
+
+https://nextjs.org/docs/app/api-reference/file-conventions/route-segment-config
+
+
+    at <unknown> (./app/dashboard/contracts/[id]/edit/page.tsx:20:8)
+    at <unknown> (https://nextjs.org/docs/app/api-reference/file-conventions/route-segment-config)
+    at <unknown> (./app/dashboard/contracts/[id]/renew/page.tsx:21:8)
+    at <unknown> (https://nextjs.org/docs/app/api-reference/file-conventions/route-segment-config)

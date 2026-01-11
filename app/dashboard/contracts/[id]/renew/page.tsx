@@ -18,9 +18,6 @@ import { Step3Documents } from "../../new/components/Step3Documents";
 import { Step4Review } from "../../new/components/Step4Review";
 import { addDays, addYears, format } from "date-fns";
 
-export function generateStaticParams() {
-    return [];
-}
 
 export default function RenewContractPage() {
     const router = useRouter();

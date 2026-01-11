@@ -429,7 +429,10 @@ export default function SettingsPage() {
                             try {
                                 const { api } = await import("@/lib/api");
 
-                                toast.info("Step 1/3: Creating Buildings...");
+                                toast.info("Step 1/4: Cleaning old data...");
+                                await api.post("/seed/reset");
+
+                                toast.info("Step 2/4: Creating Buildings...");
                                 await api.post("/seed/buildings");
 
                                 toast.info("Step 2/3: Creating Customers...");

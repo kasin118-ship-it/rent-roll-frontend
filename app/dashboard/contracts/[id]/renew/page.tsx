@@ -2,9 +2,6 @@
 
 import { useState, useCallback, useEffect } from "react";
 
-export function generateStaticParams() {
-    return [];
-}
 import { useRouter, useParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, Check, Users, FileText, Upload, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,6 +17,10 @@ import { Step2Terms } from "../../new/components/Step2Terms";
 import { Step3Documents } from "../../new/components/Step3Documents";
 import { Step4Review } from "../../new/components/Step4Review";
 import { addDays, addYears, format } from "date-fns";
+
+export function generateStaticParams() {
+    return [];
+}
 
 export default function RenewContractPage() {
     const router = useRouter();

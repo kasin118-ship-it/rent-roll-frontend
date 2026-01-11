@@ -112,10 +112,17 @@ export default function ContractsPage() {
         let rent = 0;
         let fee = 0;
         contract.contractUnits?.forEach((u: any) => {
-            const period = u.rentPeriods?.find((p: any) => new Date(p.startDate) <= today && new Date(p.endDate) >= today);
+            const periods = u.rentPeriods || [];
+            let period = periods.find((p: any) => new Date(p.startDate) <= today && new Date(p.endDate) >= today);
+
+            // Fallback for active contracts if no period strictly matches (same logic as main dashboard)
+            if (!period && contract.status === 'active' && periods.length > 0) {
+                period = periods[0];
+            }
+
             if (period) {
-                rent += Number(period.rentAmount);
-                fee += Number(period.serviceFee);
+                rent += Number(period.rentAmount || period.monthlyRent || 0);
+                fee += Number(period.serviceFee || 0);
             }
         });
         return { rent, fee };

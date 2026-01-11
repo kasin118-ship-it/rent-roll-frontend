@@ -2,10 +2,12 @@ import axios from "axios";
 
 const getBaseUrl = () => {
     let url = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+
     // Ensure URL ends with /api
     if (!url.endsWith('/api')) {
         url = `${url}/api`;
     }
+
     return url;
 };
 

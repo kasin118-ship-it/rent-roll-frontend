@@ -185,13 +185,13 @@ export default function DashboardPage() {
             {/* Stats Grid */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 {statsDisplay.map((stat) => (
-                    <Card key={stat.nameKey} className="border-none shadow-md hover:shadow-lg transition-shadow">
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium text-gray-500">{t(stat.nameKey)}</CardTitle>
-                            <stat.icon className="w-5 h-5 text-gold-500" />
+                    <Card key={stat.nameKey} className="border-none shadow-sm hover:shadow-md transition-shadow">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-4">
+                            <CardTitle className="text-xs font-medium text-gray-500 uppercase tracking-wider">{t(stat.nameKey)}</CardTitle>
+                            <stat.icon className="w-4 h-4 text-gold-500" />
                         </CardHeader>
-                        <CardContent>
-                            <div className="text-3xl font-bold text-teal-700">{stat.value}</div>
+                        <CardContent className="p-4 pt-0">
+                            <div className="text-2xl font-bold text-teal-700">{stat.value}</div>
                             {stat.trend && (
                                 <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
                                     <TrendingUp className="w-3 h-3 text-green-500" />

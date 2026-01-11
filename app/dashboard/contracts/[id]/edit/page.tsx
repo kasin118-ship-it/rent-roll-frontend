@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { api, API_URL } from "@/lib/api";
 import { ContractFormData, RentalSpace, RentPeriod, Building, Customer } from "../../new/types"; // Import from new
 import { Step1Customer } from "../../new/components/Step1Customer";
 import { Step2Terms } from "../../new/components/Step2Terms";
@@ -290,7 +290,7 @@ export default function EditContractPage() {
             });
 
             const token = localStorage.getItem('accessToken');
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/contracts/${id}`, {
+            const res = await fetch(`${API_URL}/contracts/${id}`, {
                 method: 'PATCH', // Update
                 headers: {
                     'Authorization': `Bearer ${token}`

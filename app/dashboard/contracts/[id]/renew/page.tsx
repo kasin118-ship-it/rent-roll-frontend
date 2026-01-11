@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { api, API_URL } from "@/lib/api";
 import { ContractFormData, RentalSpace, RentPeriod, Building, Customer } from "../../new/types";
 import { Step1Customer } from "../../new/components/Step1Customer";
 import { Step2Terms } from "../../new/components/Step2Terms";
@@ -291,7 +291,7 @@ export default function RenewContractPage() {
             });
 
             const token = localStorage.getItem('accessToken');
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/contracts`, {
+            const res = await fetch(`${API_URL}/contracts`, {
                 method: 'POST', // Always POST for Renewal (New Contract)
                 headers: {
                     'Authorization': `Bearer ${token}`

@@ -17,7 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { api } from "@/lib/api";
+import { api, API_URL } from "@/lib/api";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ContractDetailModalProps {
@@ -74,7 +74,7 @@ export function ContractDetailModal({ isOpen, onClose, contractId }: ContractDet
 
 
     const getDocumentUrl = (filePath: string) => {
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+        const baseUrl = API_URL;
         return `${baseUrl}/uploads/${filePath?.replace(/^.*[\\\/]/, '')}`;
     };
 

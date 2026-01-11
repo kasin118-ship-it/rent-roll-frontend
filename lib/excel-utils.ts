@@ -169,6 +169,28 @@ export function exportBuildings() {
     saveAs(blob, `buildings_export_${new Date().toISOString().split("T")[0]}.xlsx`);
 }
 
+export function downloadMasterTemplate() {
+    const wb = XLSX.utils.book_new();
+
+    // Loop through all defined templates and add them as sheets
+    Object.values(TEMPLATES).forEach((template) => {
+        const wsData = [template.headers, ...template.sampleData];
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+        // Set column widths
+        const colWidths = template.headers.map((header: string) => ({ wch: Math.max(header.length + 5, 15) }));
+        ws["!cols"] = colWidths;
+
+        XLSX.utils.book_append_sheet(wb, ws, template.name);
+    });
+
+    // Generate and download
+    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    const blob = new Blob([wbout], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    saveAs(blob, "rent_roll_master_template.xlsx");
+}
+
+
 export function exportContractsFull() {
     const wb = XLSX.utils.book_new();
 

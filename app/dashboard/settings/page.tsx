@@ -27,7 +27,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
-    downloadTemplate,
+    downloadMasterTemplate,
     exportCustomers,
     exportBuildings,
     exportContractsFull,
@@ -62,10 +62,10 @@ export default function SettingsPage() {
         toast.info("Select a backup file to restore");
     };
 
-    const handleExportTemplate = (templateKey: string) => {
+    const handleDownloadMasterTemplate = () => {
         try {
-            downloadTemplate(templateKey as "customers" | "buildings" | "contractMaster" | "rentalSpaces" | "pricingTiers");
-            toast.success(`${templateKey} template downloaded!`);
+            downloadMasterTemplate();
+            toast.success("Master template downloaded!");
         } catch (error) {
             toast.error("Failed to download template");
         }
@@ -259,52 +259,16 @@ export default function SettingsPage() {
 
                     <div>
                         <Label className="text-sm text-gray-500 mb-2 block">{t("settings.downloadTemplates")}</Label>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                            <Button variant="outline" size="sm" onClick={() => handleExportTemplate("customers")}>
-                                <Download className="w-4 h-4 mr-2" />
-                                Customers
-                            </Button>
-                            <Button variant="outline" size="sm" onClick={() => handleExportTemplate("buildings")}>
-                                <Download className="w-4 h-4 mr-2" />
-                                Buildings
-                            </Button>
-                        </div>
-                    </div>
-
-                    <Separator />
-
-                    {/* Contract-specific Templates */}
-                    <div>
-                        <Label className="text-sm text-teal-600 mb-2 block font-medium">📋 Contract Templates (Multi-Floor / Multi-Period)</Label>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="border-teal-200 text-teal-700 hover:bg-teal-50"
-                                onClick={() => handleExportTemplate("contractMaster")}
-                            >
-                                <Download className="w-4 h-4 mr-2" />
-                                Contract Master
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="border-amber-200 text-amber-700 hover:bg-amber-50"
-                                onClick={() => handleExportTemplate("rentalSpaces")}
-                            >
-                                <Download className="w-4 h-4 mr-2" />
-                                Rental Spaces
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="border-gold-200 text-gold-700 hover:bg-gold-50"
-                                onClick={() => handleExportTemplate("pricingTiers")}
-                            >
-                                <Download className="w-4 h-4 mr-2" />
-                                Pricing Tiers
-                            </Button>
-                        </div>
+                        <Button
+                            className="w-full bg-teal-600 hover:bg-teal-700 text-white"
+                            onClick={handleDownloadMasterTemplate}
+                        >
+                            <Download className="w-4 h-4 mr-2" />
+                            Download Master Template (All-in-One)
+                        </Button>
+                        <p className="text-xs text-gray-400 mt-2">
+                            Includes sheets for: Customers, Buildings, Contract Master, Rental Spaces, and Pricing Tiers.
+                        </p>
                     </div>
 
                     <Separator />

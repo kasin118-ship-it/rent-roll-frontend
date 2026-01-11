@@ -420,8 +420,10 @@ export default function SettingsPage() {
                 <CardContent className="space-y-4">
                     <Button
                         onClick={async () => {
-                            if (!confirm("This will generate Buildings, Customers, and Contracts automatically. Continue?")) return;
+                            // eslint-disable-next-line no-restricted-globals
+                            if (!window.confirm("This will generate Buildings, Customers, and Contracts automatically. Continue?")) return;
 
+                            console.log("Starting automated seeding...");
                             setIsSeeding(true);
                             toast.loading("Starting automated mock data generation...");
                             try {

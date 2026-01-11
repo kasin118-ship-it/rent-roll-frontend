@@ -1,6 +1,10 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+
+export function generateStaticParams() {
+    return [];
+}
 import { useRouter, useParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, Check, Users, FileText, Upload, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";

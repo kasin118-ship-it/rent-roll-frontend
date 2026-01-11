@@ -165,13 +165,13 @@ export default function ReportsPage() {
                     }
                 });
 
-                // Fallback: If contract is active in range but no specific period overlaps (e.g. data gap), use first period
-                if (!hasOverlap && periods.length > 0) {
-                    const firstPeriod = periods[0];
-                    const rent = (firstPeriod as any).rentAmount ?? (firstPeriod as any).monthlyRent ?? 0;
-                    monthlyRent += Number(rent) || 0;
-                    monthlyServiceFee += Number(firstPeriod.serviceFee) || 0;
-                }
+                // Fallback removed to ensure strict date matching
+                // if (!hasOverlap && periods.length > 0) {
+                //     const firstPeriod = periods[0];
+                //     const rent = (firstPeriod as any).rentAmount ?? (firstPeriod as any).monthlyRent ?? 0;
+                //     monthlyRent += Number(rent) || 0;
+                //     monthlyServiceFee += Number(firstPeriod.serviceFee) || 0;
+                // }
             });
         });
 

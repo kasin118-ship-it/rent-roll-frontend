@@ -113,10 +113,10 @@ export default function DashboardPage() {
                     return today >= start && today <= end;
                 });
 
-                // Fallback to first period if no specific period matches (e.g. slight date mismatch or future start)
-                if (!currentPeriod && periods.length > 0) {
-                    currentPeriod = periods[0];
-                }
+                // Fallback removed to ensure strict date matching
+                // if (!currentPeriod && periods.length > 0) {
+                //     currentPeriod = periods[0];
+                // }
 
                 if (currentPeriod) {
                     // Backend returns 'rentAmount', Type interface has 'monthlyRent'
@@ -264,7 +264,7 @@ export default function DashboardPage() {
                         {alerts.length === 0 ? (
                             <p className="text-gray-400 text-sm">{t("alerts.noAlerts") || "No alerts"}</p>
                         ) : (
-                            alerts.map((alert) => {
+                            alerts.map((alert: Alert) => {
                                 // Simplified class logic to avoid template string nesting issues
                                 const alertClass = alert.type === "warning"
                                     ? "bg-amber-50 border-amber-400"

@@ -115,10 +115,10 @@ export default function ContractsPage() {
             const periods = u.rentPeriods || [];
             let period = periods.find((p: any) => new Date(p.startDate) <= today && new Date(p.endDate) >= today);
 
-            // Fallback for active contracts if no period strictly matches (same logic as main dashboard)
-            if (!period && contract.status === 'active' && periods.length > 0) {
-                period = periods[0];
-            }
+            // Fallback removed to ensure strict date matching
+            // if (!period && contract.status === 'active' && periods.length > 0) {
+            //     period = periods[0];
+            // }
 
             if (period) {
                 rent += Number(period.rentAmount || period.monthlyRent || 0);

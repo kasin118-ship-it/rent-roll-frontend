@@ -451,11 +451,65 @@ export default function SettingsPage() {
                         <Database className="w-5 h-5" />
                         Mock Data Generation
                     </CardTitle>
-                    <CardDescription>Generate test data step-by-step: Buildings → Customers → Contracts</CardDescription>
+                    <CardDescription>Generate realistic test data automatically (Capacity Checked & 70/30 Revenue Split)</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                    <Button
+                        onClick={async () => {
+                            if (!confirm("This will generate Buildings, Customers, and Contracts automatically. Continue?")) return;
+
+                            setIsSeeding(true);
+                            toast.loading("Starting automated mock data generation...");
+                            try {
+                                const { api } = await import("@/lib/api");
+
+                                toast.info("Step 1/3: Creating Buildings...");
+                                await api.post("/seed/buildings");
+
+                                toast.info("Step 2/3: Creating Customers...");
+                                await api.post("/seed/customers");
+
+                                toast.info("Step 3/3: Generating Contracts (this may take a moment)...");
+                                await api.post("/seed/contracts");
+
+                                toast.dismiss();
+                                toast.success("All mock data generated successfully!");
+                                window.location.reload();
+                            } catch (e: any) {
+                                toast.dismiss();
+                                toast.error("Generation failed: " + (e?.response?.data?.message || e.message));
+                            } finally {
+                                setIsSeeding(false);
+                            }
+                        }}
+                        disabled={isSeeding}
+                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white h-12 text-lg font-medium shadow-sm transition-all hover:scale-[1.01]"
+                    >
+                        {isSeeding ? (
+                            <>
+                                <div className="w-5 h-5 mr-3 border-2 border-white/50 border-t-white rounded-full animate-spin" />
+                                Generating Data...
+                            </>
+                        ) : (
+                            <>
+                                <Database className="w-5 h-5 mr-2" />
+                                Generate All Mock Data (One-Click)
+                            </>
+                        )}
+                    </Button>
+
+                    <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                            <span className="w-full border-t border-indigo-200" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                            <span className="bg-indigo-50 px-2 text-indigo-400">Or Manual Steps</span>
+                        </div>
+                    </div>
+
                     <div className="grid grid-cols-3 gap-3">
                         <Button
+                            variant="outline"
                             onClick={async () => {
                                 toast.loading("Creating buildings...");
                                 try {
@@ -468,12 +522,12 @@ export default function SettingsPage() {
                                     toast.error(e?.response?.data?.message || e.message);
                                 }
                             }}
-                            className="bg-teal-600 hover:bg-teal-700 text-white flex-col h-auto py-3"
+                            className="flex-col h-auto py-3 border-indigo-200 text-indigo-700 hover:bg-indigo-100"
                         >
-                            <Database className="w-5 h-5 mb-1" />
-                            <span className="text-xs">1. Buildings</span>
+                            <span className="text-xs font-bold">1. Buildings</span>
                         </Button>
                         <Button
+                            variant="outline"
                             onClick={async () => {
                                 toast.loading("Creating customers...");
                                 try {
@@ -486,14 +540,14 @@ export default function SettingsPage() {
                                     toast.error(e?.response?.data?.message || e.message);
                                 }
                             }}
-                            className="bg-amber-600 hover:bg-amber-700 text-white flex-col h-auto py-3"
+                            className="flex-col h-auto py-3 border-indigo-200 text-indigo-700 hover:bg-indigo-100"
                         >
-                            <Database className="w-5 h-5 mb-1" />
-                            <span className="text-xs">2. Customers</span>
+                            <span className="text-xs font-bold">2. Customers</span>
                         </Button>
                         <Button
+                            variant="outline"
                             onClick={async () => {
-                                toast.loading("Creating contracts (may take a moment)...");
+                                toast.loading("Creating contracts...");
                                 try {
                                     const { api } = await import("@/lib/api");
                                     const res = await api.post("/seed/contracts");
@@ -504,13 +558,11 @@ export default function SettingsPage() {
                                     toast.error(e?.response?.data?.message || e.message);
                                 }
                             }}
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white flex-col h-auto py-3"
+                            className="flex-col h-auto py-3 border-indigo-200 text-indigo-700 hover:bg-indigo-100"
                         >
-                            <Database className="w-5 h-5 mb-1" />
-                            <span className="text-xs">3. Contracts</span>
+                            <span className="text-xs font-bold">3. Contracts</span>
                         </Button>
                     </div>
-                    <p className="text-xs text-gray-500">Click in order: Buildings first, then Customers, then Contracts.</p>
                 </CardContent>
             </Card>
 

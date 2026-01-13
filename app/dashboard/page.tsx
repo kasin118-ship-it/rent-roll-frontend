@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building2, Users, FileText, AlertTriangle, TrendingUp, Percent, DollarSign, Wrench, Loader2 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -51,7 +51,20 @@ export default function DashboardPage() {
     const { t } = useLanguage();
     const router = useRouter();
 
+    // Check if user is authenticated
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+    useEffect(() => {
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+            router.replace("/login");
+        } else {
+            setIsAuthenticated(true);
+        }
+    }, [router]);
+
     // 1. Fetch Data in Parallel using React Query (Cached & Background Updated)
+    // Only enable queries when authenticated
     const { data: buildingStats = {}, isLoading: isLoadingBuildings } = useQuery({
         queryKey: ['dashboard', 'buildings'],
         queryFn: async () => {
@@ -59,6 +72,7 @@ export default function DashboardPage() {
             return res.data?.data || res.data || {};
         },
         staleTime: 5 * 60 * 1000, // 5 minutes
+        enabled: isAuthenticated,
     });
 
     const { data: customers = [], isLoading: isLoadingCustomers } = useQuery({
@@ -68,6 +82,7 @@ export default function DashboardPage() {
             return Array.isArray(res.data?.data) ? res.data.data : (Array.isArray(res.data) ? res.data : []);
         },
         staleTime: 5 * 60 * 1000,
+        enabled: isAuthenticated,
     });
 
     const { data: contracts = [], isLoading: isLoadingContracts } = useQuery({
@@ -77,9 +92,10 @@ export default function DashboardPage() {
             return Array.isArray(res.data?.data) ? res.data.data : (Array.isArray(res.data) ? res.data : []);
         },
         staleTime: 5 * 60 * 1000,
+        enabled: isAuthenticated,
     });
 
-    const isLoading = isLoadingBuildings || isLoadingCustomers || isLoadingContracts;
+    const isLoading = !isAuthenticated || isLoadingBuildings || isLoadingCustomers || isLoadingContracts;
 
     // 2. Calculate Derived Stats (Memoized)
     const statsData = useMemo(() => {

@@ -10,9 +10,10 @@ interface Step1CustomerProps {
     customers: Customer[];
     selectedCustomerId: string;
     onSelect: (customer: Customer) => void;
+    onDoubleClick?: (customer: Customer) => void;
 }
 
-export function Step1Customer({ customers, selectedCustomerId, onSelect }: Step1CustomerProps) {
+export function Step1Customer({ customers, selectedCustomerId, onSelect, onDoubleClick }: Step1CustomerProps) {
     const { t } = useLanguage();
     const [search, setSearch] = useState("");
 
@@ -45,6 +46,7 @@ export function Step1Customer({ customers, selectedCustomerId, onSelect }: Step1
                     <div
                         key={customer.id}
                         onClick={() => onSelect(customer)}
+                        onDoubleClick={() => onDoubleClick?.(customer)}
                         className={cn(
                             "p-4 rounded-xl border-2 cursor-pointer transition-all duration-200",
                             selectedCustomerId === customer.id

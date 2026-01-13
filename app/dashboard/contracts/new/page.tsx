@@ -327,6 +327,10 @@ export default function ContractWizardPage() {
                             customers={customers}
                             selectedCustomerId={formData.customerId}
                             onSelect={handleCustomerSelect}
+                            onDoubleClick={(customer) => {
+                                handleCustomerSelect(customer);
+                                setCurrentStep(2);
+                            }}
                         />
                     )}
 

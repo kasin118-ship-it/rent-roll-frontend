@@ -341,10 +341,20 @@ export default function BuildingsPage() {
                                     <p className="font-medium">{selectedBuilding.rentableArea.toLocaleString()} ตร.ม.</p>
                                 </div>
                             </div>
-                            {selectedBuilding.ownerCompany && (
-                                <div>
-                                    <Label className="text-gray-500">บริษัทเจ้าของ</Label>
-                                    <p className="font-medium">{selectedBuilding.ownerCompany}</p>
+                            {(selectedBuilding.ownerCompany || selectedBuilding.ownerName) && (
+                                <div className="grid grid-cols-2 gap-4">
+                                    {selectedBuilding.ownerCompany && (
+                                        <div>
+                                            <Label className="text-gray-500">บริษัทเจ้าของ</Label>
+                                            <p className="font-medium">{selectedBuilding.ownerCompany}</p>
+                                        </div>
+                                    )}
+                                    {selectedBuilding.ownerName && (
+                                        <div>
+                                            <Label className="text-gray-500">ชื่อเจ้าของ</Label>
+                                            <p className="font-medium">{selectedBuilding.ownerName}</p>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
@@ -402,6 +412,24 @@ export default function BuildingsPage() {
                                     type="number"
                                     value={editForm.rentableArea || ""}
                                     onChange={(e) => setEditForm({ ...editForm, rentableArea: parseFloat(e.target.value) })}
+                                />
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <Label>บริษัทเจ้าของ</Label>
+                                <Input
+                                    value={editForm.ownerCompany || ""}
+                                    onChange={(e) => setEditForm({ ...editForm, ownerCompany: e.target.value })}
+                                    placeholder="ไม่ระบุ"
+                                />
+                            </div>
+                            <div>
+                                <Label>ชื่อเจ้าของ</Label>
+                                <Input
+                                    value={editForm.ownerName || ""}
+                                    onChange={(e) => setEditForm({ ...editForm, ownerName: e.target.value })}
+                                    placeholder="ไม่ระบุ"
                                 />
                             </div>
                         </div>
